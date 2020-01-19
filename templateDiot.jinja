@@ -1,0 +1,26 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{color}
+\usepackage{geometry}
+\geometry{
+a4paper,
+left=20mm,
+right=0mm,
+top=20mm,
+bottom=0mm,
+hoffset=0mm
+}
+\begin{document}
+{% for tabla in lista_diot %}
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline 
+RFC & SUBTOTAL & DESCUENTO & IMPORTE & IVA & TOTAL\\
+\hline 
+{% for item in tabla %}
+
+{{item.rfc}} & {{"%.2f"|format(item.subTotal)}} & {{"%.2f"|format(item.descuento)}} & {{"%.2f"|format(item.importe)}} & {{"%.2f"|format(item.trasladoIVA)}} & {{"%.2f"|format(item.total)}}\\
+\hline 
+{% endfor %}        
+\end{tabular}
+{% endfor %}  
+\end{document}

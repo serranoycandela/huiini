@@ -1,0 +1,74 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{color}
+\usepackage{geometry}
+\usepackage{graphicx}
+\geometry{
+ a4paper,
+ left=10mm,
+ right=0mm,
+ top=20mm,
+ bottom=0mm,
+ hoffset=0mm
+ \setlength\parindent{0pt}
+}
+\begin{document}
+\hspace{18cm} {{miFolio}}\\
+\includegraphics{C:/Dropbox/Sicad/Huiini/logo_b.png}
+\bigskip\\\
+\begin{tabular}{p{11cm}p{1cm}p{8cm}}
+
+Nombre-Emisor: {{nombre_emisor}} && nombre-receptor: {{nombre_receptor}}\\
+
+Rfc-Emisor: \colorbox{yellow}{ {{rfc_emisor}} } & & Rfc-Receptor: \colorbox{yellow}{ {{rfc_receptor}} }\\
+
+regimen-emisor: {{regimen_emisor}} & & folio: \colorbox{yellow}{ {{folio}} }\\
+
+TipoDeComprobante: \colorbox{yellow}{ {{tipoDeComprobante}} } & & serie: \colorbox{yellow}{ {{serie}} }\\
+
+
+
+\end{tabular}
+\bigskip\bigskip\bigskip\\\
+Conceptos:\\
+\begin{tabular}{|p{10cm}|c|c|c|c|}
+\hline
+Descripcion & Cantidad & Unidad & Valor unitario & Importe\\
+\hline
+{% for concepto in conceptos %}
+{{concepto.descripcion}} & {{concepto.cantidad}} & {{concepto.unidad}} & {{concepto.valorUnitario}} & {{concepto.importeConcepto}} \\
+\hline
+{% endfor %}
+\end{tabular}\\
+\bigskip
+\begin{center}
+Resumen de contribuciones:\\
+\bigskip
+\begin{tabular}{|c|c|c|}
+\hline
+ -- & Tasa & Importe\\
+\hline
+{% for elemento in elementosDeLaTabla %}
+{{elemento.cosa}} & {{elemento.tasa}} & {{"%.2f"|format(elemento.importe)}} \\
+\hline
+{% endfor %}
+\end{tabular}
+\end{center}
+
+\begin{tabular}{p{11cm}p{1cm}p{8cm}}
+\bigskip
+UUID: \colorbox{yellow}{ {{UUID}} } & & formaDePago: {{formaDePago}}\\
+
+noCertificadoSAT: {{noCertificadoSAT}} & & metodoDePago: \colorbox{yellow}{ {{metodoDePago}} }\\
+
+LugarExpedicion: {{LugarExpedicion}} & & fechaTimbrado: \colorbox{yellow}{ {{fechaTimbrado}} } \\
+\end{tabular}
+
+\bigskip
+selloCFD: {{selloCFD}} \\
+selloSAT: {{selloSAT}} \\
+
+certificado: MIIGHjCCBAagAwIBAgIUMDAwMDEwMDAwMDA0MDQ3MTI3MTIwDQ...\bigskip\bigskip\bigskip\bigskip\bigskip\bigskip
+\\Este documento no es la impresion original y NO TIENE NINGUNA VALIDEZ FISCAL O LEGAL. \\
+ Es una representacion impresa del xml:  {{UUID}} \\
+\end{document}
