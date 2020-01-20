@@ -1,9 +1,24 @@
-from setuptools import setup, Extension
+# -*- coding: utf-8 -*-
+from distutils.core import setup
+import py2exe, sys
 
-_texcaller = Extension('_texcaller',
-                       sources = ['texcaller_wrap.cxx'])
+sys.argv.append('py2exe')
+#C:\Python34\python.exe setup.py
+setup(
+    windows=[
+            {
+                "script": "huiini.py",
+                "icon_resources": [(1, "myicon.ico")]
+            }
+        ],
 
-setup(name = 'texcaller',
-      version = '0',
-      ext_modules = [_texcaller],
-      py_modules = ['texcaller'])
+
+    options={
+               "py2exe":{
+                       "unbuffered": True,
+                       "optimize": 2,
+                       "includes":["PySide.QtCore","PySide.QtGui", "urllib3", "requests", "queue"]
+               }
+       },
+
+)
