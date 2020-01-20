@@ -1,9 +1,9 @@
 #-*- encoding: utf-8 -*-
-from PySide.QtCore import *
-import requests
-from PySide.QtCore import Qt
-from PySide.QtGui import *
-from PySide import QtGui, QtCore
+from PySide2.QtCore import *
+from PySide2.QtCore import Qt
+from PySide2.QtGui import *
+from PySide2 import QtGui, QtCore, QtWidgets
+from PySide2.QtWidgets import QTableWidgetItem, QFileDialog, QProgressDialog, QMessageBox
 import sys
 import guiV2
 from os import listdir
@@ -14,13 +14,12 @@ import win32print
 import win32api
 import time as time_old
 from subprocess import Popen
-from FacturasClient import FacturaClient as Factura
+from FacturasLocal import FacturaLocal as Factura
 import math
 import json
-from requests.auth import HTTPBasicAuth
+
 from datetime import datetime
-import hashlib
-import descarga
+
 
 
 
@@ -43,14 +42,14 @@ except NameError:  # We are the main py2exe script, not a module
 
 
 
-class ImgWidgetPalomita(QtGui.QLabel):
+class ImgWidgetPalomita(QtWidgets.QLabel):
 
     def __init__(self, parent=None):
         super(ImgWidgetPalomita, self).__init__(parent)
         pic_palomita = QtGui.QPixmap(join(scriptDirectory,"palomita.png"))
         self.setPixmap(pic_palomita)
 
-class ImgWidgetTache(QtGui.QLabel):
+class ImgWidgetTache(QtWidgets.QLabel):
 
     def __init__(self, parent=None):
         super(ImgWidgetTache, self).__init__(parent)
@@ -59,7 +58,7 @@ class ImgWidgetTache(QtGui.QLabel):
 
 
 
-class Ui_MainWindow(QMainWindow, guiV2.Ui_MainWindow):
+class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
     def __init__(self, parent=None):
         super(Ui_MainWindow, self).__init__(parent)
@@ -71,7 +70,7 @@ class Ui_MainWindow(QMainWindow, guiV2.Ui_MainWindow):
         self.pdflatex_path = "C:/Program Files/MiKTeX 2.9/miktex/bin/x64/pdflatex.exe"
 
         self.carpetaChooser.clicked.connect(self.cualCarpeta)
-        self.descarga_bt.clicked.connect(self.descarga_mesta)
+        #self.descarga_bt.clicked.connect(self.descarga_mesta)
         self.imprimir.clicked.connect(self.imprime)
 
         self.impresora.clicked.connect(self.cambiaImpresora)
@@ -142,15 +141,15 @@ class Ui_MainWindow(QMainWindow, guiV2.Ui_MainWindow):
         tablaIndex = 0
 
         #url_get = "http://huiini.pythonanywhere.com/resumen"
-        url_get =  "%s/resumen/%s/" % (url_server, self.hash_carpeta)
 
-        r = requests.get(url_get, stream=True,
-                        auth=(self.w.username.text(), self.w.password.text()))
-        time_old.sleep(1)
-        if r.status_code == 200:
-            with open(join(join(self.esteFolder,"huiini"), 'resumenDiot.xlsx'),'wb') as f:
-                r.raw.decode_content = True
-                shutil.copyfileobj(r.raw, f)
+
+        # r = requests.get(url_get, stream=True,
+        #                 auth=(self.w.username.text(), self.w.password.text()))
+        # time_old.sleep(1)
+        # if r.status_code == 200:
+        #     with open(join(join(self.esteFolder,"huiini"), 'resumenDiot.xlsx'),'wb') as f:
+        #         r.raw.decode_content = True
+        #         shutil.copyfileobj(r.raw, f)
 
 
 
@@ -284,7 +283,7 @@ class Ui_MainWindow(QMainWindow, guiV2.Ui_MainWindow):
                 print("este guey me pico:"+xml)
             except:
                 print ("el sistema no tiene una aplicacion por default para abrir xmls")
-                QtGui.QMessageBox.information(self, "Information", "El sistema no tiene una aplicación por default para abrir xmls" )
+                QMessageBox.information(self, "Information", "El sistema no tiene una aplicación por default para abrir xmls" )
 
         if column == 0:
 
@@ -296,7 +295,7 @@ class Ui_MainWindow(QMainWindow, guiV2.Ui_MainWindow):
                 print("este guey me pico:"+pdf)
             except:
                 print ("el sistema no tiene una aplicacion por default para abrir pdfs")
-                QtGui.QMessageBox.information(self, "Information", "El sistema no tiene una aplicación por default para abrir pdfs" )
+                QMessageBox.information(self, "Information", "El sistema no tiene una aplicación por default para abrir pdfs" )
 
 
     def meDoblePicaronResumen(self, row,column):
@@ -309,7 +308,7 @@ class Ui_MainWindow(QMainWindow, guiV2.Ui_MainWindow):
             print("este guey me pico:"+pdf)
         except:
             print ("el sistema no tiene una aplicacion por default para abrir pdfs")
-            QtGui.QMessageBox.information(self, "Information", "El sistema no tiene una aplicación por default para abrir pdfs" )
+            QMessageBox.information(self, "Information", "El sistema no tiene una aplicación por default para abrir pdfs" )
 
     def cambiaSeleccionDeImpresora(self, curr, prev):
         print(curr.text())
@@ -381,9 +380,8 @@ class Ui_MainWindow(QMainWindow, guiV2.Ui_MainWindow):
         if esteFileChooser.exec_():
 
             self.esteFolder = esteFileChooser.selectedFiles()[0] + "/"
-            pre_hash = self.esteFolder + str(datetime.now())
-            pal_hash = pre_hash.encode('utf-8')
-            self.hash_carpeta = hashlib.sha224(pal_hash).hexdigest()
+
+
 
             if not os.path.exists(join(self.esteFolder, "huiini")):
                 os.makedirs(join(self.esteFolder, "huiini"))
@@ -432,7 +430,7 @@ class Ui_MainWindow(QMainWindow, guiV2.Ui_MainWindow):
                     chunks.append(str(esteDuplicado)+"\n")
                 mensaje2 = "".join(chunks)
                 mensaje = mensaje + mensaje2
-                QtGui.QMessageBox.information(self, "Information", mensaje)
+                QMessageBox.information(self, "Information", mensaje)
 
             contador = 0
             for factura in self.listaDeFacturasOrdenadas:
@@ -535,7 +533,7 @@ class Ui_MainWindow(QMainWindow, guiV2.Ui_MainWindow):
                 if not factura.mensaje == "":
                     mensajeAlerta += factura.UUID + factura.mensaje + r'\n'
             if not mensajeAlerta == "":
-                QtGui.QMessageBox.information(self, "Information", mensajeAlerta)
+                QMessageBox.information(self, "Information", mensajeAlerta)
 
             pd.hide()
 
@@ -545,9 +543,9 @@ class Ui_MainWindow(QMainWindow, guiV2.Ui_MainWindow):
         self.raise_()
         self.activateWindow()
 
-app = QApplication(sys.argv)
+app = QtWidgets.QApplication(sys.argv)
 form = Ui_MainWindow()
 form.show()
-form.doit()
+
 
 app.exec_()

@@ -21,7 +21,7 @@ class FacturaLocal(object):
         self.pdflatex_path = "C:\\Program Files\\MiKTeX 2.9\\miktex\\bin\\x64\\pdflatex.exe"
         print(self.pdflatex_path)
         self.xml_path = xml_path
-
+        self.has_pdf = False
         xml_dir = os.path.dirname(self.xml_path)
         self.xml_name = os.path.basename(self.xml_path)
 
@@ -581,7 +581,7 @@ class FacturaLocal(object):
         ## aqui falta manejar los posibes errores al generar el pdf
 
 
-
+        os.chdir(os.path.join(os.path.dirname(self.tex_path),"huiini"))
         subprocess.run([self.pdflatex_path, self.tex_path],shell=True)
 #
 #
