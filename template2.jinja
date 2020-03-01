@@ -26,17 +26,19 @@ regimen-emisor: {{regimen_emisor}} & & folio: \colorbox{yellow}{ {{folio}} }\\
 
 TipoDeComprobante: \colorbox{yellow}{ {{tipoDeComprobante}} } & & serie: \colorbox{yellow}{ {{serie}} }\\
 
+uso CFDI: {{ReceptorUsoCFDI}}\\
+
 
 
 \end{tabular}
 \bigskip\bigskip\bigskip\\\
 Conceptos:\\
-\begin{tabular}{|p{10cm}|c|c|c|c|}
+\begin{tabular}{|p{1.5cm}|p{3.6cm}|p{3.6cm}|c|c|c|c|c|}
 \hline
-Descripcion & Cantidad & Unidad & Valor unitario & Importe\\
+Clave & Concepto & Descripcion & Cant & Unidad & V_unitario & Importe & Impuesto \\
 \hline
 {% for concepto in conceptos %}
-{{concepto.descripcion}} & {{concepto.cantidad}} & {{concepto.unidad}} & {{concepto.valorUnitario}} & {{concepto.importeConcepto}} \\
+{{concepto.clave_concepto}} & {{concepto.concepto}} & {{concepto.descripcion}} & {{concepto.cantidad}} & {{concepto.unidad}} & {{concepto.valorUnitario}} & {{concepto.importeConcepto}} &  {{concepto.impuestos}} \\
 \hline
 {% endfor %}
 \end{tabular}\\

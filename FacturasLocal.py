@@ -8,6 +8,8 @@ import codecs
 import sys
 from contextlib import contextmanager
 import subprocess
+from os.path import join
+import json
 
 
 
@@ -29,6 +31,19 @@ class FacturaLocal(object):
 #        if not os.path.exists(pdfs_dir):
 #            os.makedirs(pdfs_dir)
 
+        try:
+            scriptDirectory = os.path.dirname(os.path.abspath(__file__))
+        except NameError:  # We are the main py2exe script, not a module
+            scriptDirectory = os.path.dirname(os.path.abspath(sys.argv[0]))
+
+        with open(join(scriptDirectory,"conceptos.json"), "r") as jsonfile:
+            self.concepto = json.load(jsonfile)
+
+        with open(join(scriptDirectory,"catUsoCfdi.json"), "r") as jsonfile:
+            self.uso = json.load(jsonfile)
+
+        with open(join(scriptDirectory,"catClavUnidad.json"), "r") as jsonfile:
+            self.unidad = json.load(jsonfile)
         self.mensaje = ""
         #self.dictForma
 
@@ -69,6 +84,7 @@ class FacturaLocal(object):
             self.conceptoValorUnitarioKey = "valorUnitario"
             self.conceptoUnidadKey = "unidad"
             self.conceptoCantidadKey = "cantidad"
+
 
             self.retImpuestoKey = "impuesto"
             #self.retTasaKey = "tasa"
@@ -122,6 +138,8 @@ class FacturaLocal(object):
             self.conceptoValorUnitarioKey = "Valorunitario"
             self.conceptoUnidadKey = "Unidad"
             self.conceptoCantidadKey = "Cantidad"
+            self.conceptoClaveKey = "ClaveProdServ"
+            self.usoCFDIKey = "UsoCFDI"
 
             self.selloCFDKey = "SelloCFD"
             self.selloSATKey = "SelloSAT"
@@ -332,6 +350,7 @@ class FacturaLocal(object):
 
         self.ReceptorRFC = self.latexStr(self.ReceptorTag.get(self.receptorRfcKey))
         self.ReceptorNombre = self.latexStr(self.ReceptorTag.get(self.receptorNombreKey))
+        self.ReceptorUsoCFDI = self.latexStr(self.ReceptorTag.get(self.usoCFDIKey))
 
         ############################################################  CONCEPTOS TAG ############################################################################
         if self.conceptosTag == None:
@@ -354,9 +373,29 @@ class FacturaLocal(object):
 
                         unidad = self.latexStr(conceptoTag.get(self.conceptoUnidadKey))
 
+                        clave_concepto = self.latexStr(conceptoTag.get(self.conceptoClaveKey))
+
+                        concepto_string = self.concepto[clave_concepto]
+
                         cantidad = self.latexStr(conceptoTag.get(self.conceptoCantidadKey))
 
-                        self.conceptos.append({"cantidad":cantidad, "unidad":unidad, "valorUnitario":valorUnitario, "importeConcepto":importeConcepto, "descripcion":descripcion})
+                        try: #segun mcfly faltan retenciones
+                            ImpuestosTag = conceptoTag.find("{http://www.sat.gob.mx/cfd/3}Impuestos")
+                            TrasladosTag = ImpuestosTag.findall("{http://www.sat.gob.mx/cfd/3}Traslados")
+                            elPrimerTraslado = TrasladosTag[0]
+                            trasladoTag = elPrimerTraslado.find("{http://www.sat.gob.mx/cfd/3}Traslado")
+                            impuestos = trasladoTag.get("Importe")
+                        except:
+                            impuestos = 0
+
+                        self.conceptos.append({"clave_concepto": clave_concepto,
+                                                "concepto": concepto_string,
+                                                "cantidad":cantidad,
+                                                "unidad":unidad,
+                                                "valorUnitario":valorUnitario,
+                                                "importeConcepto":importeConcepto,
+                                                "descripcion":descripcion,
+                                                "impuestos":impuestos})
 
         self.retenciones = {"IVA":0,"ISR":0,"IEPS":0,"ISH":0,"TUA":0}
 
@@ -544,6 +583,7 @@ class FacturaLocal(object):
             'selloCFD': self.selloCFD,
             'selloSAT': self.selloSAT,
             'conceptos': self.conceptos,
+            'ReceptorUsoCFDI': self.ReceptorUsoCFDI,
     #             'retencionIVA': self.retenciones["IVA"],
     #             'rencionISR': self.retenciones["ISR"],
     #             'trasladoIVA': self.traslados["IVA"],
@@ -582,7 +622,7 @@ class FacturaLocal(object):
 
 
         os.chdir(os.path.join(os.path.dirname(self.tex_path),"huiini"))
-        subprocess.run([self.pdflatex_path, self.tex_path],shell=True)
+        subprocess.run([self.pdflatex_path, "-interaction=nonstopmode", self.tex_path],shell=True)
 #
 #
 #

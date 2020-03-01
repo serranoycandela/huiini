@@ -42,6 +42,10 @@ except NameError:  # We are the main py2exe script, not a module
 
 
 
+
+
+
+
 class ImgWidgetPalomita(QtWidgets.QLabel):
 
     def __init__(self, parent=None):
