@@ -23,7 +23,7 @@ class FacturaLocal(object):
         #self.pdflatex_path = "C:/Users/SICAD/Dropbox/Generador de PDF/TestWxPython/miktex/bin/pdflatex.exe"
 
         #self.pdflatex_path = "C:\\Users\\arabela\\Documents\\GitHub\\huiini\\dist\\huiini\\MiKTeX 2.9\\miktex\bin\\x64\\pdflatex.exe"
-        self.pdflatex_path = "C:\\Program Files\\MiKTeX 2.9\\miktex\\bin\\x64\\pdflatex.exe"
+        self.pdflatex_path = "C:\\Program Files\\MiKTeX\\miktex\\bin\\x64\\pdflatex.exe"
         print(self.pdflatex_path)
         self.xml_path = xml_path
         self.has_pdf = False
