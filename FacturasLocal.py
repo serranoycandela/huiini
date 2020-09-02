@@ -10,7 +10,9 @@ from contextlib import contextmanager
 import subprocess
 from os.path import join
 import json
-
+import re
+from pdflatex import PDFLaTeX
+import pdflatex
 
 
 class FacturaLocal(object):
@@ -20,6 +22,7 @@ class FacturaLocal(object):
         #self.pdflatex_path = os.path.join(self.midir + os.sep,"C:/Program Files/MiKTeX 2.9/miktex/bin/x64/pdflatex.exe")
         #self.pdflatex_path = "C:/Users/SICAD/Dropbox/Generador de PDF/TestWxPython/miktex/bin/pdflatex.exe"
 
+        #self.pdflatex_path = "C:\\Users\\arabela\\Documents\\GitHub\\huiini\\dist\\huiini\\MiKTeX 2.9\\miktex\bin\\x64\\pdflatex.exe"
         self.pdflatex_path = "C:\\Program Files\\MiKTeX 2.9\\miktex\\bin\\x64\\pdflatex.exe"
         print(self.pdflatex_path)
         self.xml_path = xml_path
@@ -32,17 +35,17 @@ class FacturaLocal(object):
 #            os.makedirs(pdfs_dir)
 
         try:
-            scriptDirectory = os.path.dirname(os.path.abspath(__file__))
+            self.scriptDirectory = os.path.dirname(os.path.abspath(__file__))
         except NameError:  # We are the main py2exe script, not a module
-            scriptDirectory = os.path.dirname(os.path.abspath(sys.argv[0]))
+            self.scriptDirectory = os.path.dirname(os.path.abspath(sys.argv[0]))
 
-        with open(join(scriptDirectory,"conceptos.json"), "r") as jsonfile:
+        with open(join(self.scriptDirectory,"conceptos.json"), "r") as jsonfile:
             self.concepto = json.load(jsonfile)
 
-        with open(join(scriptDirectory,"catUsoCfdi.json"), "r") as jsonfile:
+        with open(join(self.scriptDirectory,"catUsoCfdi.json"), "r") as jsonfile:
             self.uso = json.load(jsonfile)
 
-        with open(join(scriptDirectory,"catClavUnidad.json"), "r") as jsonfile:
+        with open(join(self.scriptDirectory,"catClavUnidad.json"), "r") as jsonfile:
             self.unidad = json.load(jsonfile)
         self.mensaje = ""
         #self.dictForma
@@ -217,7 +220,6 @@ class FacturaLocal(object):
 
 
 
-
     def sumale(self):
 
         #self.sumaDeRetenciones = self.retenciones.IVA + self.retenciones.ISR ####sera?????????
@@ -361,7 +363,7 @@ class FacturaLocal(object):
                 if conceptoTag == None:
                     print("no hay traslados")
                 else:
-                    #print(conceptoTag)
+
                     if conceptoTag == None:
                         print("no tiene impuestos transladados")
                     else:
@@ -375,9 +377,13 @@ class FacturaLocal(object):
 
                         clave_concepto = self.latexStr(conceptoTag.get(self.conceptoClaveKey))
 
-                        concepto_string = self.concepto[clave_concepto]
-
                         cantidad = self.latexStr(conceptoTag.get(self.conceptoCantidadKey))
+
+
+
+                        concepto_string = descripcion[:6]
+
+                        print(concepto_string)
 
                         try: #segun mcfly faltan retenciones
                             ImpuestosTag = conceptoTag.find("{http://www.sat.gob.mx/cfd/3}Impuestos")
@@ -396,6 +402,9 @@ class FacturaLocal(object):
                                                 "importeConcepto":importeConcepto,
                                                 "descripcion":descripcion,
                                                 "impuestos":impuestos})
+
+
+
 
         self.retenciones = {"IVA":0,"ISR":0,"IEPS":0,"ISH":0,"TUA":0}
 
@@ -563,7 +572,11 @@ class FacturaLocal(object):
 
         self.tex_path = os.path.dirname(self.xml_path)+ "/"+self.UUID+".tex"
 
+        logo_path = os.path.join(self.scriptDirectory,"logo_b.png")
+
+        logo_path = logo_path.replace(os.path.sep,"/")
         context = {
+            'logo_b' : logo_path,
             'miFolio' : self.miFolio,
             'folio': self.folio,
             'serie': self.serie,
@@ -606,6 +619,8 @@ class FacturaLocal(object):
         template = getTemplate(os.path.join(script_path,"template2.jinja"))
         with codecs.open (self.tex_path, "w", "utf-8") as miFile:
             output = template.render(context)
+            output = re.sub(r'\{§', '{', output)
+            output = re.sub(r'§\}', '}', output)
 
             # jinja returns unicode - so `output` needs to be encoded to a bytestring
             # before writing it to a file
@@ -622,6 +637,7 @@ class FacturaLocal(object):
 
 
         os.chdir(os.path.join(os.path.dirname(self.tex_path),"huiini"))
+
         subprocess.run([self.pdflatex_path, "-interaction=nonstopmode", self.tex_path],shell=True)
 #
 #

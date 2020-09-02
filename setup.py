@@ -17,7 +17,7 @@ setup(
                "py2exe":{
                        "unbuffered": True,
                        "optimize": 2,
-                       "includes":["PySide.QtCore","PySide.QtGui", "urllib3", "requests", "queue"]
+                       "includes":["PySide2.QtCore","PySide2.QtGui"]
                }
        },
 

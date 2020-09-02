@@ -17,6 +17,7 @@ from subprocess import Popen
 from FacturasLocal import FacturaLocal as Factura
 import math
 import json
+import xlsxwriter
 
 from datetime import datetime
 
@@ -127,22 +128,61 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
 
     def hazResumenDiot(self,currentDir):
-        sumaSubTotal = 0
-        sumaDescuento = 0
-        sumaTrasladoIVA = 0
-        sumaImporte = 0
-        sumaTotal = 0
+
+        xlsx_path = os.path.join(currentDir,os.path.join("huiini","resumen.xlsx"))
+        workbook = xlsxwriter.Workbook(xlsx_path)
+        worksheet = workbook.add_worksheet("por_RFC")
+
+        worksheet.write(0, 0,     "RFC")
+        worksheet.write(0, 1,     "SUBTOTAL")
+        worksheet.write(0, 2,     "DESCUENTO")
+        worksheet.write(0, 3,     "IMPORTE")
+        worksheet.write(0, 4,     "IVA")
+        worksheet.write(0, 5,     "TOTAL")
+
+        row = 0
         for key, value in self.diccionarioPorRFCs.items():
-            sumaSubTotal += value['subTotal']
-            sumaDescuento += value['descuento']
-            sumaTrasladoIVA += value['trasladoIVA']
-            sumaImporte += value['importe']
-            sumaTotal += value['total']
+            row += 1
+            worksheet.write(row, 0, key)
+            worksheet.write(row, 1, value['subTotal'])
+            worksheet.write(row, 2, value['descuento'])
+            worksheet.write(row, 3, value['trasladoIVA'])
+            worksheet.write(row, 4, value['importe'])
+            worksheet.write(row, 5, value['total'])
 
-        self.listaDiot = []
+        worksheet2 = workbook.add_worksheet("por_Factura")
 
-        contador = 0
-        tablaIndex = 0
+        worksheet2.write(0, 0,     "Fecha")
+        worksheet2.write(0, 1,     "UUID")
+        worksheet2.write(0, 2,     "Emisor")
+        worksheet2.write(0, 3,     "Concepto")
+        worksheet2.write(0, 4,     "Sub")
+        worksheet2.write(0, 5,     "IVA")
+        worksheet2.write(0, 6,     "Total")
+        worksheet2.write(0, 7,     "F-Pago")
+        worksheet2.write(0, 8,     "M-Pago")
+
+        row = 0
+        for factura in self.listaDeFacturasOrdenadas:
+            row += 1
+            worksheet2.write(row, 0, factura.fechaTimbrado)
+            worksheet2.write(row, 1, factura.UUID)
+            worksheet2.write(row, 2, factura.EmisorRFC)
+            worksheet2.write(row, 3, factura.conceptos[0]['descripcion'])
+            worksheet2.write(row, 4, factura.subTotal)
+            worksheet2.write(row, 5, factura.traslados["IVA"]["importe"])
+            worksheet2.write(row, 6, factura.total)
+            worksheet2.write(row, 7, factura.formaDePago)
+            worksheet2.write(row, 8, factura.metodoDePago)
+
+        workbook.close()
+
+
+
+
+
+
+
 
         #url_get = "http://huiini.pythonanywhere.com/resumen"
 
@@ -304,15 +344,15 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
     def meDoblePicaronResumen(self, row,column):
         print("me picaron en : " +str(row)+", " +str(column))
-        pdf = join(join(self.esteFolder,"huiini"),"resumenDiot.pdf")
+        excel = join(join(self.esteFolder,"huiini"),"resumen.xlsx")
         #acrobatPath = r'C:/Program Files (x86)/Adobe/Acrobat Reader DC/Reader/AcroRd32.exe'
         #subprocess.Popen("%s %s" % (acrobatPath, pdf))
         try:
-            os.startfile(pdf)
-            print("este guey me pico:"+pdf)
+            os.startfile(excel)
+            print("este guey me pico:"+excel)
         except:
-            print ("el sistema no tiene una aplicacion por default para abrir pdfs")
-            QMessageBox.information(self, "Information", "El sistema no tiene una aplicación por default para abrir pdfs" )
+            print ("el sistema no tiene una aplicacion por default para abrir exceles")
+            QMessageBox.information(self, "Information", "El sistema no tiene una aplicación por default para abrir exceles" )
 
     def cambiaSeleccionDeImpresora(self, curr, prev):
         print(curr.text())

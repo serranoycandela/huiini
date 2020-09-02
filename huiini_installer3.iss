@@ -21,9 +21,9 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={pf}\{#MyAppName}
 DisableProgramGroupPage=yes
-LicenseFile=C:\Users\SICAD\Documents\GitHub\huiini_client\LICENSE
+LicenseFile=C:\Users\arabela\Documents\GitHub\huiini\LICENSE
 OutputBaseFilename=huiiniInstaller
-SetupIconFile=C:\Users\SICAD\Documents\GitHub\huiini_client\myicon.ico
+SetupIconFile=C:\Users\arabela\Documents\GitHub\huiini\myicon.ico
 Compression=lzma
 SolidCompression=yes
 
@@ -34,8 +34,8 @@ Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "C:\Users\SICAD\Documents\GitHub\huiini_client\dist\huiini.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\SICAD\Documents\GitHub\huiini_client\dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "C:\Users\arabela\Documents\GitHub\huiini\dist\huiini\huiini.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\arabela\Documents\GitHub\huiini\dist\huiini\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
@@ -44,4 +44,3 @@ Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: 
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
-
