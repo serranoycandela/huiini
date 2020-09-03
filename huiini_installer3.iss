@@ -36,6 +36,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "C:\Users\arabela\Documents\GitHub\huiini\dist\huiini\huiini.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\arabela\Documents\GitHub\huiini\dist\huiini\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "C:\Users\arabela\Documents\GitHub\huiini\*.png"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\arabela\Documents\GitHub\huiini\*.json"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
