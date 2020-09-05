@@ -38,6 +38,8 @@ Source: "C:\Users\arabela\Documents\GitHub\huiini\dist\huiini\huiini.exe"; DestD
 Source: "C:\Users\arabela\Documents\GitHub\huiini\dist\huiini\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "C:\Users\arabela\Documents\GitHub\huiini\*.png"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\arabela\Documents\GitHub\huiini\*.json"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\arabela\Documents\GitHub\huiini\*.jinja"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\arabela\Documents\huiini\pdflatex_path.txt"; DestDir: "{userdocs}\huiini"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

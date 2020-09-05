@@ -151,29 +151,37 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
             worksheet.write(row, 5, value['total'])
 
         worksheet2 = workbook.add_worksheet("por_Factura")
-
-        worksheet2.write(0, 0,     "Fecha")
-        worksheet2.write(0, 1,     "UUID")
-        worksheet2.write(0, 2,     "Emisor")
-        worksheet2.write(0, 3,     "Concepto")
-        worksheet2.write(0, 4,     "Sub")
-        worksheet2.write(0, 5,     "IVA")
-        worksheet2.write(0, 6,     "Total")
-        worksheet2.write(0, 7,     "F-Pago")
-        worksheet2.write(0, 8,     "M-Pago")
+        worksheet2.write(0, 0, "clave_ps")
+        worksheet2.write(0, 1,     "Fecha")
+        worksheet2.write(0, 2,     "UUID")
+        worksheet2.write(0, 3,     "Nombre")
+        worksheet2.write(0, 4,     "RFC")
+        worksheet2.write(0, 5,     "Concepto")
+        worksheet2.write(0, 6,     "Sub")
+        worksheet2.write(0, 7,     "IVA")
+        worksheet2.write(0, 8,     "Total")
+        worksheet2.write(0, 9,     "F-Pago")
+        worksheet2.write(0, 10,     "M-Pago")
 
         row = 0
         for factura in self.listaDeFacturasOrdenadas:
             row += 1
-            worksheet2.write(row, 0, factura.fechaTimbrado)
-            worksheet2.write(row, 1, factura.UUID)
-            worksheet2.write(row, 2, factura.EmisorRFC)
-            worksheet2.write(row, 3, factura.conceptos[0]['descripcion'])
-            worksheet2.write(row, 4, factura.subTotal)
-            worksheet2.write(row, 5, factura.traslados["IVA"]["importe"])
-            worksheet2.write(row, 6, factura.total)
-            worksheet2.write(row, 7, factura.formaDePago)
-            worksheet2.write(row, 8, factura.metodoDePago)
+            worksheet2.write(row, 0, factura.conceptos[0]['clave_concepto'])
+            worksheet2.write(row, 1, factura.fechaTimbrado)
+            worksheet2.write(row, 2, factura.UUID)
+            worksheet2.write(row, 3, factura.EmisorNombre)
+            worksheet2.write(row, 4, factura.EmisorRFC)
+            worksheet2.write(row, 5, factura.conceptos[0]['descripcion'])
+            worksheet2.write(row, 6, factura.subTotal)
+            worksheet2.write(row, 7, factura.traslados["IVA"]["importe"])
+            worksheet2.write(row, 8, factura.total)
+            worksheet2.write(row, 9, factura.formaDePagoStr)
+            worksheet2.write(row, 10, factura.metodoDePago)
+
+        row += 1
+        worksheet2.write(row, 6,     "=SUM(G2:G"+str(row)+")")
+        worksheet2.write(row, 7,     "=SUM(H2:H"+str(row)+")")
+        worksheet2.write(row, 8,     "=SUM(I2:I"+str(row)+")")
 
         workbook.close()
 
@@ -510,8 +518,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
                 self.tableWidget_xml.setItem(contador,11,self.esteItem(str(factura.retenciones["IVA"]),""))
                 self.tableWidget_xml.setItem(contador,12,self.esteItem(str(factura.retenciones["ISR"]),""))
                 self.tableWidget_xml.setItem(contador,13,self.esteItem(str(factura.total),""))
-                self.tableWidget_xml.setItem(contador,14,self.esteItem(factura.formaDePago,""))
-                self.tableWidget_xml.setItem(contador,15, self.esteItem(factura.metodoDePago,factura.metodoDePagoStr))
+                self.tableWidget_xml.setItem(contador,14,self.esteItem(factura.formaDePagoStr,""))
+                self.tableWidget_xml.setItem(contador,15, self.esteItem(factura.metodoDePago,factura.metodoDePago))
 
                 if factura.EmisorRFC in self.diccionarioPorRFCs:
                     self.diccionarioPorRFCs[factura.EmisorRFC]['subTotal'] += float(factura.subTotal)

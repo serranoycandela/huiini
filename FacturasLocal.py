@@ -23,9 +23,14 @@ class FacturaLocal(object):
         #self.pdflatex_path = "C:/Users/SICAD/Dropbox/Generador de PDF/TestWxPython/miktex/bin/pdflatex.exe"
 
         #self.pdflatex_path = "C:\\Users\\arabela\\Documents\\GitHub\\huiini\\dist\\huiini\\MiKTeX 2.9\\miktex\bin\\x64\\pdflatex.exe"
-        path_localappdata = os.getenv('LOCALAPPDATA')
-        self.pdflatex_path = join(path_localappdata,"Programs","MiKTeX","miktex","bin","x64","pdflatex.exe")
-        self.pdflatex_path = self.pdflatex_path.replace("\\","\\\\")
+        # path_localappdata = os.getenv('LOCALAPPDATA')
+        # self.pdflatex_path = join(path_localappdata,"Programs","MiKTeX","miktex","bin","x64","pdflatex.exe")
+        # self.pdflatex_path = self.pdflatex_path.replace("\\","\\\\")
+        home = os.path.expanduser('~')
+        pdflatex_folder_path = os.path.join(home, 'Documents', 'huiini')
+        with open(os.path.join(pdflatex_folder_path,"pdflatex_path.txt")) as f:
+            self.pdflatex_path = f.readline()
+
         #self.pdflatex_path = "C:\\Program Files\\MiKTeX\\miktex\\bin\\x64\\pdflatex.exe"
         print(self.pdflatex_path)
         self.xml_path = xml_path
@@ -161,11 +166,11 @@ class FacturaLocal(object):
         if self.version:
             self.cosas_comunes_32_33()
             self.sumale()
-            self.setMetodo()
+            self.setForma()
 
 
-    def setMetodo(self):
-        dictMetodo = {"01":"Efectivo",
+    def setForma(self):
+        dictForma = {"01":"Efectivo",
                        "02":"Cheque nominativo",
                        "03":"Transferencia Electrónica de Fondos",
                        "04":"Tarjeta de Crédito",
@@ -175,10 +180,10 @@ class FacturaLocal(object):
                        "28":"Tarjeta de Débito",
                        "29": "Tarjeta de Servicio",
                        "99":"Otros"}
-        if self.metodoDePago in dictMetodo:
-            self.metodoDePagoStr = dictMetodo[self.metodoDePago]
+        if self.formaDePago in dictForma:
+            self.formaDePagoStr = dictForma[self.formaDePago]
         else:
-            self.metodoDePagoStr = self.metodoDePago
+            self.formaDePagoStr = self.formaDePago
 
     def latexStr(self, strCorrupto):
 
@@ -641,7 +646,13 @@ class FacturaLocal(object):
 
         os.chdir(os.path.join(os.path.dirname(self.tex_path),"huiini"))
 
+
+        self.tex_path = self.tex_path.replace("/", "\\\\")
+        print(self.pdflatex_path)
+        print(self.tex_path)
         subprocess.run([self.pdflatex_path, "-interaction=nonstopmode", self.tex_path],shell=True)
+
+
 #
 #
 #
