@@ -3,20 +3,25 @@
 \usepackage{color}
 \usepackage{geometry}
 \usepackage{graphicx}
+
+
+
 \geometry{
- a4paper,
+ letter,
  left=10mm,
- right=0mm,
+ right=10mm,
  top=20mm,
- bottom=0mm,
+ bottom=10mm,
  hoffset=0mm
  \setlength\parindent{0pt}
 }
 \begin{document}
 \hspace{18cm} {{miFolio}}\\
-\includegraphics{§{{logo_b}}§}
+\begin{tabular}{p{7cm}p{5cm}p{5cm}}
+\includegraphics{§{{logo_b}}§} & & \includegraphics{§{{logo_s}}§}
+\end{tabular}
 \bigskip\\\
-\begin{tabular}{p{11cm}p{1cm}p{8cm}}
+\begin{tabular}{p{9cm}p{1cm}p{8cm}}
 
 Nombre-Emisor: {{nombre_emisor}} && nombre-receptor: {{nombre_receptor}}\\
 
@@ -56,21 +61,24 @@ Resumen de contribuciones:\\
 {% endfor %}
 \end{tabular}
 \end{center}
-
-\begin{tabular}{p{11cm}p{1cm}p{8cm}}
 \bigskip
-UUID: \colorbox{yellow}{ {{UUID}} } & & formaDePago: {{formaDePago}}\\
 
-noCertificadoSAT: {{noCertificadoSAT}} & & metodoDePago: \colorbox{yellow}{ {{metodoDePago}} }\\
-
-LugarExpedicion: {{LugarExpedicion}} & & fechaTimbrado: \colorbox{yellow}{ {{fechaTimbrado}} } \\
+\begin{tabular}{p{9cm}p{1.5cm}p{8cm}}
+UUID: \colorbox{yellow}{ {{UUID}} } && formaDePago: {{formaDePago}} \\
+noCertificadoSAT: {{noCertificadoSAT}} && metodoDePago: \colorbox{yellow}{ {{metodoDePago}} }\\
+LugarExpedicion: {{LugarExpedicion}} && fechaTimbrado: \colorbox{yellow}{ {{fechaTimbrado}} } \\
 \end{tabular}
 
 \bigskip
-selloCFD: {{selloCFD}} \\
-selloSAT: {{selloSAT}} \\
+selloCFD:\ {{selloCFD}}
+\medskip
 
-certificado: MIIGHjCCBAagAwIBAgIUMDAwMDEwMDAwMDA0MDQ3MTI3MTIwDQ...\bigskip\bigskip\bigskip\bigskip\bigskip\bigskip
+selloSAT:\ {{selloSAT}}
+
+\bigskip
+certificado:\ {{certificado}}
+
+\bigskip\bigskip\bigskip\bigskip\bigskip
 \\Este documento no es la impresion original y NO TIENE NINGUNA VALIDEZ FISCAL O LEGAL. \\
  Es una representacion impresa del xml:  {{UUID}} \\
 \end{document}

@@ -26,12 +26,9 @@ from datetime import datetime
 
 ##pyside-uic mainwindow.ui -o gui.py
 ##pyside-uic mainwindowV2.ui -o guiV2.py
-# class checaMe(requests.auth.AuthBase):
-#     def __call__(self, r):
-#         # Implement my authentication
-#         return r
+##C:\Python36\Scripts\pyinstaller.exe viaticos.py
 
-#url_server = "http://192.168.15.17:8008"
+
 url_server = "http://huiini.pythonanywhere.com"
 
 
@@ -39,11 +36,6 @@ try:
     scriptDirectory = os.path.dirname(os.path.abspath(__file__))
 except NameError:  # We are the main py2exe script, not a module
     scriptDirectory = os.path.dirname(os.path.abspath(sys.argv[0]))
-
-
-
-
-
 
 
 
@@ -162,6 +154,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         worksheet2.write(0, 8,     "Total")
         worksheet2.write(0, 9,     "F-Pago")
         worksheet2.write(0, 10,     "M-Pago")
+        worksheet2.write(0, 11,     "Tipo")
 
         row = 0
         for factura in self.listaDeFacturasOrdenadas:
@@ -177,6 +170,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
             worksheet2.write(row, 8, factura.total)
             worksheet2.write(row, 9, factura.formaDePagoStr)
             worksheet2.write(row, 10, factura.metodoDePago)
+            worksheet2.write(row, 11, factura.conceptos[0]['tipo'])
 
         row += 1
         worksheet2.write(row, 6,     "=SUM(G2:G"+str(row)+")")
@@ -422,7 +416,20 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
                 #         self.tableWidget_xml.setCellWidget(contador,0, ImgWidgetTache(self))
                 # except:
                 #     self.tableWidget_xml.setCellWidget(contador,0, ImgWidgetTache(self))
-
+    def borraAuxiliares(self):
+        time_old.sleep(0.2*len(self.listaDeFacturasOrdenadas))
+        for archivo in os.listdir(self.esteFolder):
+            if ".tex" in archivo:
+                eltex = join(self.esteFolder + os.sep,archivo)
+                os.remove(eltex)
+        for archivo in os.listdir(join(self.esteFolder,"huiini")):
+            if ".log" in archivo:
+                ellog = join(join(self.esteFolder,"huiini"),archivo)
+                os.remove(ellog)
+        for archivo in os.listdir(join(self.esteFolder,"huiini")):
+            if ".aux" in archivo:
+                elaux = join(join(self.esteFolder,"huiini"),archivo)
+                os.remove(elaux)
 
     def cualCarpeta(self):
 
@@ -452,15 +459,18 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
                 if ".xml" in archivo:
 
                     laFactura = Factura(join(self.esteFolder + os.sep,archivo))
-                    if laFactura.version:
-                        if laFactura.UUID in self.listaDeUUIDs:
-                            print("no hagas nada")
-                            cuantosDuplicados+=1
-                            self.listaDeDuplicados.append(laFactura.UUID)
-                        else:
-                            self.listaDeUUIDs.append(laFactura.UUID)
-                            contador += 1
-                            self.listaDeFacturas.append(laFactura)
+                    if laFactura.sello == "SinSello":
+                        print("Omitiendo xml sin sello "+laFactura.xml_path)
+                    else:
+                        if laFactura.version:
+                            if laFactura.UUID in self.listaDeUUIDs:
+
+                                cuantosDuplicados+=1
+                                self.listaDeDuplicados.append(laFactura.UUID)
+                            else:
+                                self.listaDeUUIDs.append(laFactura.UUID)
+                                contador += 1
+                                self.listaDeFacturas.append(laFactura)
 
             if contador > 13:
                 self.tableWidget_xml.setRowCount(contador)
@@ -592,6 +602,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
         self.folder.setText("Carpeta Procesada: " + u'\n' + self.esteFolder)
         self.folder.show()
+        self.borraAuxiliares()
         self.raise_()
         self.activateWindow()
 

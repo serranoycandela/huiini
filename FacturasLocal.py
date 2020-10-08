@@ -32,7 +32,7 @@ class FacturaLocal(object):
             self.pdflatex_path = f.readline()
 
         #self.pdflatex_path = "C:\\Program Files\\MiKTeX\\miktex\\bin\\x64\\pdflatex.exe"
-        print(self.pdflatex_path)
+        #print(self.pdflatex_path)
         self.xml_path = xml_path
         self.has_pdf = False
         xml_dir = os.path.dirname(self.xml_path)
@@ -225,7 +225,19 @@ class FacturaLocal(object):
     def setFolio(self,folio):
         self.miFolio = folio
 
-
+    def tipo_de_gasto(self, clave_ps):
+        tipo = "Otros"
+        if clave_ps.startswith('7811') or clave_ps.startswith('9511') or clave_ps.startswith('1510') or clave_ps.startswith('1511') or clave_ps.startswith('1512'):
+            tipo = "Transporte"
+        if clave_ps.startswith('9010'):
+            tipo = "Alimentos"
+        if clave_ps.startswith('9011'):
+            tipo = "Hospedaje"
+        if clave_ps.startswith('811617') or clave_ps.startswith('831116'):
+            tipo = "Telecomunicaciones"
+        if clave_ps.startswith('84111505'):
+            tipo = "Nómina"
+        return(tipo)
 
 
     def sumale(self):
@@ -338,8 +350,11 @@ class FacturaLocal(object):
         except:
             self.descuento = 0
 
-        self.sello = self.root.get (self.selloKey)[:50] + "..."
-
+        try:
+            self.sello = self.root.get(self.selloKey)[:50] + "..."
+        except:
+            self.sello = "SinSello"
+            print("la factura "+self.xml_path+" está corrupta")
 
 
         self.metodoDePago = self.latexStr(self.root.get (self.metodoDePagoKey))
@@ -347,7 +362,11 @@ class FacturaLocal(object):
 
         self.noCertificado = self.latexStr(self.root.get (self.noCertificadoKey))
 
-        self.certificado = self.root.get (self.certificadoKey)[:50] + "..."
+        #self.certificado = self.root.get(self.certificadoKey)
+        try:
+            self.certificado = self.root.get(self.certificadoKey)[:50] + "..."
+        except:
+            self.certificado = "SinCertificado"
         self.total = float(self.root.get(self.totalKey))
 
         self.tipoDeComprobante = self.latexStr(self.root.get (self.tipoDeComprobanteKey))
@@ -387,6 +406,8 @@ class FacturaLocal(object):
 
                         cantidad = self.latexStr(conceptoTag.get(self.conceptoCantidadKey))
 
+                        tipo = self.tipo_de_gasto(clave_concepto)
+
 
 
                         concepto_string = descripcion[:6]
@@ -409,7 +430,8 @@ class FacturaLocal(object):
                                                 "valorUnitario":valorUnitario,
                                                 "importeConcepto":importeConcepto,
                                                 "descripcion":descripcion,
-                                                "impuestos":impuestos})
+                                                "impuestos":impuestos,
+                                                "tipo":tipo})
 
 
 
@@ -509,7 +531,9 @@ class FacturaLocal(object):
             TimbreFiscalDigitalTag = self.ComplementoTag.find("{http://www.sat.gob.mx/TimbreFiscalDigital}TimbreFiscalDigital")
             self.UUID = TimbreFiscalDigitalTag.get ("UUID")
             self.selloCFD = TimbreFiscalDigitalTag.get (self.selloCFDKey)[:50] + "..."
+            #self.selloCFD = TimbreFiscalDigitalTag.get (self.selloCFDKey)
             self.selloSAT = TimbreFiscalDigitalTag.get (self.selloSATKey)[:50] + "..."
+            #self.selloSAT = TimbreFiscalDigitalTag.get (self.selloSATKey)
             self.noCertificadoSAT = TimbreFiscalDigitalTag.get (self.noCertificadoSATKey)
             self.fechaTimbrado = TimbreFiscalDigitalTag.get ("FechaTimbrado")
             self.retencionesLocales = {"IVA":{"importe":0,"tasa":0},"ISR":{"importe":0,"tasa":0},"IEPS":{"importe":0,"tasa":0},"ISH":{"importe":0,"tasa":0},"TUA":{"importe":0,"tasa":0}}
@@ -583,8 +607,14 @@ class FacturaLocal(object):
         logo_path = os.path.join(self.scriptDirectory,"logo_b.png")
 
         logo_path = logo_path.replace(os.path.sep,"/")
+
+        logo_s_path = os.path.join(self.scriptDirectory,"logo_s.png")
+
+        logo_s_path = logo_s_path.replace(os.path.sep,"/")
+
         context = {
             'logo_b' : logo_path,
+            'logo_s' : logo_s_path,
             'miFolio' : self.miFolio,
             'folio': self.folio,
             'serie': self.serie,
@@ -597,7 +627,7 @@ class FacturaLocal(object):
             'rfc_receptor': self.ReceptorRFC,
             'nombre_emisor': self.EmisorNombre,
             'UUID': self.UUID,
-            'formaDePago': self.formaDePago,
+            'formaDePago': self.formaDePagoStr,
             'metodoDePago': self.metodoDePago,
             'fechaTimbrado': self.fechaTimbrado,
             'noCertificadoSAT': self.noCertificadoSAT,
@@ -605,6 +635,7 @@ class FacturaLocal(object):
             'selloSAT': self.selloSAT,
             'conceptos': self.conceptos,
             'ReceptorUsoCFDI': self.ReceptorUsoCFDI,
+            'certificado': self.certificado,
     #             'retencionIVA': self.retenciones["IVA"],
     #             'rencionISR': self.retenciones["ISR"],
     #             'trasladoIVA': self.traslados["IVA"],
