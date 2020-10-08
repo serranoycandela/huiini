@@ -417,25 +417,29 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
                 # except:
                 #     self.tableWidget_xml.setCellWidget(contador,0, ImgWidgetTache(self))
     def borraAuxiliares(self):
+        self.pd.show()
         self.pd.setLabelText("Borrando Auxiliares...")
-        time_old.sleep(1.0*len(self.listaDeFacturasOrdenadas))
+        contador = 0
+        for t in range(0,10):
+            time_old.sleep((1.0*len(self.listaDeFacturasOrdenadas)/10.0))
+            self.pd.setValue((100.0 * contador) /(len(self.listaDeFacturasOrdenadas)*5.0))
         contador = 0
         for archivo in os.listdir(self.esteFolder):
             if ".tex" in archivo:
                 contador += 1
-                self.pd.setValue((100.0 * contador) /(len(self.listaDeFacturasOrdenadas)*3.0))
+                self.pd.setValue((100.0 * contador) /(len(self.listaDeFacturasOrdenadas)*5.0))
                 eltex = join(self.esteFolder + os.sep,archivo)
                 os.remove(eltex)
         for archivo in os.listdir(join(self.esteFolder,"huiini")):
             if ".log" in archivo:
                 contador += 1
-                self.pd.setValue((100.0 * contador) /(len(self.listaDeFacturasOrdenadas)*3.0))
+                self.pd.setValue((100.0 * contador) /(len(self.listaDeFacturasOrdenadas)*5.0))
                 ellog = join(join(self.esteFolder,"huiini"),archivo)
                 os.remove(ellog)
         for archivo in os.listdir(join(self.esteFolder,"huiini")):
             if ".aux" in archivo:
                 contador += 1
-                self.pd.setValue((100.0 * contador) /(len(self.listaDeFacturasOrdenadas)*3.0))
+                self.pd.setValue((100.0 * contador) /(len(self.listaDeFacturasOrdenadas)*5.0))
                 elaux = join(join(self.esteFolder,"huiini"),archivo)
                 os.remove(elaux)
         self.pd.hide()
