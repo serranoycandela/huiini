@@ -26,7 +26,7 @@ from datetime import datetime
 
 ##pyside-uic mainwindow.ui -o gui.py
 ##pyside-uic mainwindowV2.ui -o guiV2.py
-##C:\Python36\Scripts\pyinstaller.exe viaticos.py
+##C:\Python36\Scripts\pyinstaller.exe huiini.py
 
 
 url_server = "http://huiini.pythonanywhere.com"
@@ -417,19 +417,28 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
                 # except:
                 #     self.tableWidget_xml.setCellWidget(contador,0, ImgWidgetTache(self))
     def borraAuxiliares(self):
-        time_old.sleep(0.2*len(self.listaDeFacturasOrdenadas))
+        self.pd.setLabelText("Borrando Auxiliares...")
+        time_old.sleep(1.0*len(self.listaDeFacturasOrdenadas))
+        contador = 0
         for archivo in os.listdir(self.esteFolder):
             if ".tex" in archivo:
+                contador += 1
+                self.pd.setValue((100.0 * contador) /(len(self.listaDeFacturasOrdenadas)*3.0))
                 eltex = join(self.esteFolder + os.sep,archivo)
                 os.remove(eltex)
         for archivo in os.listdir(join(self.esteFolder,"huiini")):
             if ".log" in archivo:
+                contador += 1
+                self.pd.setValue((100.0 * contador) /(len(self.listaDeFacturasOrdenadas)*3.0))
                 ellog = join(join(self.esteFolder,"huiini"),archivo)
                 os.remove(ellog)
         for archivo in os.listdir(join(self.esteFolder,"huiini")):
             if ".aux" in archivo:
+                contador += 1
+                self.pd.setValue((100.0 * contador) /(len(self.listaDeFacturasOrdenadas)*3.0))
                 elaux = join(join(self.esteFolder,"huiini"),archivo)
                 os.remove(elaux)
+        self.pd.hide()
 
     def cualCarpeta(self):
 
@@ -480,10 +489,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
             print(self.listaDeFacturasOrdenadas)
 
 
-            pd =  QProgressDialog("Operation in progress.", "Cancel", 0, 100, self)
-            pd.setWindowTitle("Huiini")
-            pd.setValue(0)
-            pd.show()
+            self.pd =  QProgressDialog("Operation in progress.", "Cancel", 0, 100, self)
+            self.pd.setWindowTitle("Huiini")
+            self.pd.setValue(0)
+            self.pd.show()
 
             if cuantosDuplicados > 0:
                 mensaje = "hay "+str(cuantosDuplicados)+" duplicados\n"
@@ -496,9 +505,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
             contador = 0
             for factura in self.listaDeFacturasOrdenadas:
-                pd.setValue(50*((contador + 1)/len(self.listaDeFacturasOrdenadas)))
+                self.pd.setValue(50*((contador + 1)/len(self.listaDeFacturasOrdenadas)))
                 factura.setFolio(contador + 1)
-                pd.setLabelText("Procesando: " + factura.UUID[:17] + "...")
+                self.pd.setLabelText("Procesando: " + factura.UUID[:17] + "...")
 
                 #url = "http://huiini.pythonanywhere.com/upload"
                 #url =  "%s/upload/%s/" % (url_server, self.hash_carpeta)
@@ -559,10 +568,12 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
 
             #if contador == len(self.listaDeFacturasOrdenadas):
-            pd.setLabelText("Creando Resumen...")
+
+            self.pd.show()
+            self.pd.setLabelText("Creando Resumen...")
             for t in range(0,5):
                 time_old.sleep(0.05*len(self.listaDeFacturasOrdenadas))
-                pd.setValue(pd.value() + ( (100 - pd.value()) / 2))
+                self.pd.setValue(self.pd.value() + ( (100 - self.pd.value()) / 2))
 
 
 
@@ -581,10 +592,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
 
             self.sumale()
-            pd.setLabelText("Carpeta procesada")
-            pd.setValue(pd.value() + ( (100 - pd.value()) / 2))
+            self.pd.setLabelText("Carpeta procesada")
+            self.pd.setValue(self.pd.value() + ( (100 - self.pd.value()) / 2))
             self.hazResumenDiot(self.esteFolder)
-            pd.setValue(100)
+            self.pd.setValue(100)
             self.tableWidget_resumen.setItem(0,1,QTableWidgetItem("Resumen Diot"))
             self.tableWidget_resumen.setItem(0,2,QTableWidgetItem("Sumatoria del Periodo"))
             self.tableWidget_resumen.setCellWidget(0,0, ImgWidgetPalomita(self))
@@ -597,7 +608,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
             if not mensajeAlerta == "":
                 QMessageBox.information(self, "Information", mensajeAlerta)
 
-            pd.hide()
+
 
 
         self.folder.setText("Carpeta Procesada: " + u'\n' + self.esteFolder)
