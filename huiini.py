@@ -3,7 +3,7 @@ from PySide2.QtCore import *
 from PySide2.QtCore import Qt
 from PySide2.QtGui import *
 from PySide2 import QtGui, QtCore, QtWidgets
-from PySide2.QtWidgets import QTableWidgetItem, QFileDialog, QProgressDialog, QMessageBox
+from PySide2.QtWidgets import QTableWidgetItem, QFileDialog, QProgressDialog, QMessageBox, QListView, QAbstractItemView, QTreeView
 import sys
 import guiV2
 from os import listdir
@@ -17,19 +17,28 @@ from subprocess import Popen
 from FacturasLocal import FacturaLocal as Factura
 import math
 import json
-import xlsxwriter
+#import xlsxwriter
+from openpyxl.utils.dataframe import dataframe_to_rows
+import pandas as pd
+
+from openpyxl import load_workbook,  Workbook
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Border, Side, PatternFill, Font, Alignment, numbers
+from openpyxl.worksheet.datavalidation import DataValidation
+from openpyxl.utils import get_column_letter
+
 
 from datetime import datetime
 
 
 
 
-##pyside-uic mainwindow.ui -o gui.py
-##pyside-uic mainwindowV2.ui -o guiV2.py
+
+##C:\Python36\Scripts\pyside2-uic.exe mainwindowV2.ui -o guiV2.py
 ##C:\Python36\Scripts\pyinstaller.exe huiini.py
 
 
-url_server = "http://huiini.pythonanywhere.com"
+
 
 
 try:
@@ -71,6 +80,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         self.imprimir.clicked.connect(self.imprime)
 
         self.impresora.clicked.connect(self.cambiaImpresora)
+        self.botonCancela.clicked.connect(self.cancelaImpresion)
+
         self.listaDeImpresoras.currentItemChanged.connect(self.cambiaSeleccionDeImpresora)
 
         self.tableWidget_xml.setColumnCount(16)
@@ -116,68 +127,205 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         self.tableWidget_xml.cellDoubleClicked.connect(self.meDoblePicaronXML)
         self.tableWidget_resumen.cellDoubleClicked.connect(self.meDoblePicaronResumen)
 
+    def as_text(self,value):
+        if value is None:
+            return ""
+        return str(value)
+
+    def style_ws(self, ws, columna_totales, sumas_row):
+        cell_border = Border(left=Side(border_style='medium', color='FF000000'),
+                     right=Side(border_style='medium', color='FF000000'),
+                     top=Side(border_style='medium', color='FF000000'),
+                     bottom=Side(border_style='medium', color='FF000000'))
+
+        cell_border_sumas = Border(left=Side(border_style=None, color='FF000000'),
+                     right=Side(border_style=None, color='FF000000'),
+                     top=Side(border_style='thin', color='FF000000'),
+                     bottom=Side(border_style='thin', color='FF000000'))
+
+        for cell in ws["1:1"]:
+            cell.fill = PatternFill(start_color="8ccbff", end_color="8ccbff", fill_type = "solid")
+            cell.font = Font(bold=True)
+            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+            cell.border = cell_border
+
+        for column_cells in ws.columns:
+            #length = max(len(self.as_text(cell.value)) for cell in column_cells)
+            length = len(self.as_text(column_cells[0].value))
+            ws.column_dimensions[column_cells[0].column_letter].width = length+5
+
+        ws.column_dimensions['A'].width = 12
+
+        for cell in ws['A']:
+            cell.font = Font(bold=True)
+
+
+        for cell in ws[str(sumas_row)+":"+str(sumas_row)]:
+            cell.border = cell_border_sumas
+            cell.font = Font(bold=True)
+
+
+        for i in range(2,sumas_row+1):
+            for j in range(2,columna_totales+1):
+                ws.cell(i,j).number_format = numbers.FORMAT_NUMBER_COMMA_SEPARATED1
+
+        ws.cell(sumas_row,1).fill = PatternFill(start_color="4ac6ff", end_color="4ac6ff", fill_type = "solid")
+        ws.cell(sumas_row,1).border = cell_border
+
+
+    def calculaAgregados(self, df, ws_cats, variable):
+        meses = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"]
+        por_categorias = df.groupby(['mes', 'tipo'], as_index=False).agg({variable:sum})
+        por_categorias_wide = por_categorias.pivot_table(index="mes",columns=['tipo'],values=variable,fill_value= 0)
+        por_categorias_wide.reset_index(inplace=True)
+        por_categorias_wide['mes'] = pd.Categorical(por_categorias_wide['mes'], meses)
+        por_categorias_wide = por_categorias_wide.sort_values("mes")
+        por_categorias_wide['mes'] = por_categorias_wide.mes.astype(str)
+        for r in dataframe_to_rows(por_categorias_wide, index=False, header=True):
+            ws_cats.append(r)
+
+        print(por_categorias_wide)
+        self.numeroDeColumnas = len(por_categorias_wide.columns)
+        self.columna_totales = self.numeroDeColumnas + 1
+        self.sumas_row = len(por_categorias_wide.index)+2
+        ws_cats.cell(1,self.columna_totales, "Total")
+        ws_cats.cell(self.sumas_row,1,"Anual")
+
+        for i in range(2,self.columna_totales):
+            letra = get_column_letter(i)
+            ws_cats.cell(self.sumas_row,i,"=SUM("+letra+ "2:"+letra+ str(self.sumas_row-1)+")")
+
+        letra_final = get_column_letter(self.numeroDeColumnas)
+        for i in range(2,self.sumas_row):
+            ws_cats.cell(i,self.columna_totales,"=SUM(B"+str(i)+ ":"+letra_final+ str(i)+")")
+
+        letra_sumas = get_column_letter(self.columna_totales)
+        ws_cats.cell(self.sumas_row,self.columna_totales,"=SUM("+letra_sumas+"2:"+letra_sumas+str(self.sumas_row-1)  +")")
+
+    def hazAgregados(self,paths):
+        print(paths[0])
+        year_folder = os.path.split(paths[0])[0]
+        print(year_folder)
+        year = os.path.split(os.path.split(paths[0])[0])[1]
+        client = os.path.split(os.path.split(os.path.split(paths[0])[0])[0])[1]
+        print(client+"_"+year)
+
+        xlsx_path = os.path.join(year_folder, client+"_"+year + ".xlsx")
+
+        workbook = Workbook()
+        ws_todos = workbook.create_sheet("todos")
+        sheet1_name = workbook.get_sheet_names()[0]
+        sheet1 = workbook[sheet1_name]
+        workbook.remove_sheet(sheet1)
+        ws_cats = workbook.create_sheet("iva_por_categria")
+        ws_cats_importe = workbook.create_sheet("importe_por_categria")
+
+
+
+        ws_todos.cell(1, 1, "mes")
+        ws_todos.cell(1, 2, 'clave_concepto')
+        ws_todos.cell(1, 3, 'UUID')
+        ws_todos.cell(1, 4, 'cantidad')
+        ws_todos.cell(1, 5, 'importeConcepto')
+        ws_todos.cell(1, 6, 'descripcion')
+        ws_todos.cell(1, 7, 'impuestos')
+        ws_todos.cell(1, 8, 'tipo')
+
+        row = 1
+        # for mes in meses:
+        #     if mes in meses_folders:
+        #         for concepto in self.conceptos[mes]:
+        for concepto in self.conceptos:
+            row += 1
+            ws_todos.cell(row, 1, concepto['mes'])
+            ws_todos.cell(row, 2, concepto['clave_concepto'])
+            ws_todos.cell(row, 3, concepto['UUID'])
+            ws_todos.cell(row, 4, concepto['cantidad'])
+            ws_todos.cell(row, 5, concepto['importeConcepto'])
+            ws_todos.cell(row, 6, concepto['descripcion'])
+            ws_todos.cell(row, 7, concepto['impuestos'])
+            ws_todos.cell(row, 8, concepto['tipo'])
+
+        df = pd.DataFrame(self.conceptos)
+
+
+
+        self.calculaAgregados(df, ws_cats, 'impuestos')
+        self.style_ws(ws_cats, self.columna_totales, self.sumas_row)
+
+        self.calculaAgregados(df, ws_cats_importe, 'importeConcepto')
+        self.style_ws(ws_cats_importe, self.columna_totales, self.sumas_row)
+
+
+        workbook.save(xlsx_path)
 
 
 
     def hazResumenDiot(self,currentDir):
 
         xlsx_path = os.path.join(currentDir,os.path.join("huiini","resumen.xlsx"))
-        workbook = xlsxwriter.Workbook(xlsx_path)
-        worksheet = workbook.add_worksheet("por_RFC")
+        #workbook = xlsxwriter.Workbook(xlsx_path)
+        #worksheet = workbook.add_worksheet("por_RFC")
+        workbook = Workbook()
+        ws_rfc = workbook.create_sheet("por_RFC")
+        sheet1_name = workbook.get_sheet_names()[0]
+        sheet1 = workbook[sheet1_name]
+        workbook.remove_sheet(sheet1)
 
-        worksheet.write(0, 0,     "RFC")
-        worksheet.write(0, 1,     "SUBTOTAL")
-        worksheet.write(0, 2,     "DESCUENTO")
-        worksheet.write(0, 3,     "IMPORTE")
-        worksheet.write(0, 4,     "IVA")
-        worksheet.write(0, 5,     "TOTAL")
+        ws_rfc.cell(1, 1,     "RFC")
+        ws_rfc.cell(1, 2,     "SUBTOTAL")
+        ws_rfc.cell(1, 3,     "DESCUENTO")
+        ws_rfc.cell(1, 4,     "IMPORTE")
+        ws_rfc.cell(1, 5,     "IVA")
+        ws_rfc.cell(1, 6,     "TOTAL")
 
-        row = 0
+        row = 1
         for key, value in self.diccionarioPorRFCs.items():
             row += 1
-            worksheet.write(row, 0, key)
-            worksheet.write(row, 1, value['subTotal'])
-            worksheet.write(row, 2, value['descuento'])
-            worksheet.write(row, 3, value['trasladoIVA'])
-            worksheet.write(row, 4, value['importe'])
-            worksheet.write(row, 5, value['total'])
+            ws_rfc.cell(row, 1, key)
+            ws_rfc.cell(row, 2, value['subTotal'])
+            ws_rfc.cell(row, 3, value['descuento'])
+            ws_rfc.cell(row, 4, value['trasladoIVA'])
+            ws_rfc.cell(row, 5, value['importe'])
+            ws_rfc.cell(row, 6, value['total'])
 
-        worksheet2 = workbook.add_worksheet("por_Factura")
-        worksheet2.write(0, 0, "clave_ps")
-        worksheet2.write(0, 1,     "Fecha")
-        worksheet2.write(0, 2,     "UUID")
-        worksheet2.write(0, 3,     "Nombre")
-        worksheet2.write(0, 4,     "RFC")
-        worksheet2.write(0, 5,     "Concepto")
-        worksheet2.write(0, 6,     "Sub")
-        worksheet2.write(0, 7,     "IVA")
-        worksheet2.write(0, 8,     "Total")
-        worksheet2.write(0, 9,     "F-Pago")
-        worksheet2.write(0, 10,     "M-Pago")
-        worksheet2.write(0, 11,     "Tipo")
+        #worksheet2 = workbook.add_worksheet("por_Factura")
+        ws_factura = workbook.create_sheet("por_Factura")
+        ws_factura.cell(1, 1, "clave_ps")
+        ws_factura.cell(1, 2,     "Fecha")
+        ws_factura.cell(1, 3,     "UUID")
+        ws_factura.cell(1, 4,     "Nombre")
+        ws_factura.cell(1, 5,     "RFC")
+        ws_factura.cell(1, 6,     "Concepto")
+        ws_factura.cell(1, 7,     "Sub")
+        ws_factura.cell(1, 8,     "IVA")
+        ws_factura.cell(1, 9,     "Total")
+        ws_factura.cell(1, 10,     "F-Pago")
+        ws_factura.cell(1, 11,     "M-Pago")
+        ws_factura.cell(1, 12,     "Tipo")
 
-        row = 0
+        row = 1
         for factura in self.listaDeFacturasOrdenadas:
             row += 1
-            worksheet2.write(row, 0, factura.conceptos[0]['clave_concepto'])
-            worksheet2.write(row, 1, factura.fechaTimbrado)
-            worksheet2.write(row, 2, factura.UUID)
-            worksheet2.write(row, 3, factura.EmisorNombre)
-            worksheet2.write(row, 4, factura.EmisorRFC)
-            worksheet2.write(row, 5, factura.conceptos[0]['descripcion'])
-            worksheet2.write(row, 6, factura.subTotal)
-            worksheet2.write(row, 7, factura.traslados["IVA"]["importe"])
-            worksheet2.write(row, 8, factura.total)
-            worksheet2.write(row, 9, factura.formaDePagoStr)
-            worksheet2.write(row, 10, factura.metodoDePago)
-            worksheet2.write(row, 11, factura.conceptos[0]['tipo'])
+            ws_factura.cell(row, 1, factura.conceptos[0]['clave_concepto'])
+            ws_factura.cell(row, 2, factura.fechaTimbrado)
+            ws_factura.cell(row, 3, factura.UUID)
+            ws_factura.cell(row, 4, factura.EmisorNombre)
+            ws_factura.cell(row, 5, factura.EmisorRFC)
+            ws_factura.cell(row, 6, factura.conceptos[0]['descripcion'])
+            ws_factura.cell(row, 7, factura.subTotal)
+            ws_factura.cell(row, 8, factura.traslados["IVA"]["importe"])
+            ws_factura.cell(row, 9, factura.total)
+            ws_factura.cell(row, 10, factura.formaDePagoStr)
+            ws_factura.cell(row, 11, factura.metodoDePago)
+            ws_factura.cell(row, 12, factura.conceptos[0]['tipo'])
 
         row += 1
-        worksheet2.write(row, 6,     "=SUM(G2:G"+str(row)+")")
-        worksheet2.write(row, 7,     "=SUM(H2:H"+str(row)+")")
-        worksheet2.write(row, 8,     "=SUM(I2:I"+str(row)+")")
+        ws_factura.cell(row, 7,     "=SUM(G2:G"+str(row-1)+")")
+        ws_factura.cell(row, 8,     "=SUM(H2:H"+str(row-1)+")")
+        ws_factura.cell(row, 9,     "=SUM(I2:I"+str(row-1)+")")
 
-        workbook.close()
+        workbook.save(xlsx_path)
 
 
 
@@ -368,6 +516,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         for (a,b,name,d) in win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL):
             self.listaDeImpresoras.addItem(name)
 
+    def cancelaImpresion(self):
+        print("cancelaria")
 
 
 
@@ -445,16 +595,33 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         self.pd.hide()
 
     def cualCarpeta(self):
-
         self.folder.hide()
-        esteFileChooser = QFileDialog()
-        esteFileChooser.setFileMode(QFileDialog.Directory)
-        if esteFileChooser.exec_():
+        file_dialog = QFileDialog()
+        file_dialog.setFileMode(QFileDialog.DirectoryOnly)
+        file_dialog.setOption(QFileDialog.DontUseNativeDialog, True)
+        file_view = file_dialog.findChild(QListView, 'listView')
 
-            self.esteFolder = esteFileChooser.selectedFiles()[0] + "/"
+        # to make it possible to select multiple directories:
+        if file_view:
+            file_view.setSelectionMode(QAbstractItemView.MultiSelection)
+        f_tree_view = file_dialog.findChild(QTreeView)
+        if f_tree_view:
+            f_tree_view.setSelectionMode(QAbstractItemView.MultiSelection)
 
+        if file_dialog.exec():
+            paths = file_dialog.selectedFiles()
 
+        self.procesaCarpetas(paths)
 
+    def procesaCarpetas(self,paths):
+        self.conceptos = []
+        for path in paths:
+            self.esteFolder = join(path,"EGRESOS")
+
+            self.mes = os.path.split(path)[1]
+            self.mes = ''.join([i for i in self.mes if not i.isdigit()])
+            self.mes = self.mes.strip()
+            #self.conceptos[self.mes] = []
             if not os.path.exists(join(self.esteFolder, "huiini")):
                 os.makedirs(join(self.esteFolder, "huiini"))
             self.tableWidget_xml.clear()
@@ -511,6 +678,15 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
             for factura in self.listaDeFacturasOrdenadas:
                 self.pd.setValue(50*((contador + 1)/len(self.listaDeFacturasOrdenadas)))
                 factura.setFolio(contador + 1)
+                los_conceptos = factura.conceptos.copy()
+                for concepto in los_conceptos:
+                    concepto["mes"] = self.mes
+                    concepto["UUID"] = factura.UUID
+                    if concepto["impuestos"]:
+                        concepto["impuestos"] = float(concepto['impuestos'])
+                    else:
+                        concepto["impuestos"] = 0
+                self.conceptos.extend(los_conceptos)
                 self.pd.setLabelText("Procesando: " + factura.UUID[:17] + "...")
 
                 #url = "http://huiini.pythonanywhere.com/upload"
@@ -582,7 +758,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
 
 
-            self.hazPDFs()
+            #self.hazPDFs()
 
 
 
@@ -615,11 +791,15 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
 
 
-        self.folder.setText("Carpeta Procesada: " + u'\n' + self.esteFolder)
-        self.folder.show()
-        self.borraAuxiliares()
+            self.folder.setText("Carpeta Procesada: " + u'\n' + self.esteFolder)
+            self.folder.show()
+
+        #self.borraAuxiliares()
+        self.hazAgregados(paths)
+
         self.raise_()
         self.activateWindow()
+
 
 app = QtWidgets.QApplication(sys.argv)
 form = Ui_MainWindow()

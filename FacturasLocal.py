@@ -227,16 +227,31 @@ class FacturaLocal(object):
 
     def tipo_de_gasto(self, clave_ps):
         tipo = "Otros"
+        first4 = clave_ps[0:4]
         if clave_ps.startswith('7811') or clave_ps.startswith('9511') or clave_ps.startswith('1510') or clave_ps.startswith('1511') or clave_ps.startswith('1512'):
             tipo = "Transporte"
-        if clave_ps.startswith('9010'):
+        if clave_ps.startswith('9010') or (int(first4) > 5000 and int(first4) < 5100 and not first4.startswith("5021") ):
             tipo = "Alimentos"
         if clave_ps.startswith('9011'):
             tipo = "Hospedaje"
-        if clave_ps.startswith('811617') or clave_ps.startswith('831116'):
+        if clave_ps.startswith('811617') or clave_ps.startswith('831116') or clave_ps.startswith('811121'):
             tipo = "Telecomunicaciones"
         if clave_ps.startswith('84111505'):
             tipo = "Nómina"
+        if clave_ps.startswith('841215'):
+            tipo = "Institución Bancaria"
+        if clave_ps.startswith('801315'):
+            tipo = "Renta"
+        if clave_ps.startswith('841316'):
+            tipo = "Seguro"
+        if clave_ps.startswith('801618') or clave_ps.startswith('811618'):
+            tipo = "Renta de Equipo"
+        if clave_ps.startswith('781022'):
+            tipo = "Envios"
+        if clave_ps.startswith('811122'):
+            tipo = "Soporte Técnico"
+
+
         return(tipo)
 
 
