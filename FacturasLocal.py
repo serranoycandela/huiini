@@ -161,6 +161,7 @@ class FacturaLocal(object):
 
             self.totalImpuestosTrasladadosKey = "totalImpuestosTrasladados" #############################????????????????
             self.EmisorRegimen = self.latexStr(self.EmisorTag.get("RegimenFiscal"))
+            self.IdDocumentoKey = "IdDocumento"
 
 
         if self.version:
@@ -551,6 +552,17 @@ class FacturaLocal(object):
             #self.selloSAT = TimbreFiscalDigitalTag.get (self.selloSATKey)
             self.noCertificadoSAT = TimbreFiscalDigitalTag.get (self.noCertificadoSATKey)
             self.fechaTimbrado = TimbreFiscalDigitalTag.get ("FechaTimbrado")
+
+
+            PagosTag = self.ComplementoTag.find("{http://www.sat.gob.mx/Pagos}Pagos")
+            if PagosTag:
+                PagoTag = PagosTag.find("{http://www.sat.gob.mx/Pagos}Pago")
+                DoctoRelacionadoTag = PagoTag.find("{http://www.sat.gob.mx/Pagos}DoctoRelacionado")
+                self.IdDocumento = DoctoRelacionadoTag.get(self.IdDocumentoKey)
+                self.ImpPagado = float(DoctoRelacionadoTag.get("ImpPagado"))
+
+
+
             self.retencionesLocales = {"IVA":{"importe":0,"tasa":0},"ISR":{"importe":0,"tasa":0},"IEPS":{"importe":0,"tasa":0},"ISH":{"importe":0,"tasa":0},"TUA":{"importe":0,"tasa":0}}
             ImpuestosLocalesTag = self.ComplementoTag.find("{http://www.sat.gob.mx/implocal}ImpuestosLocales")
             if ImpuestosLocalesTag :
