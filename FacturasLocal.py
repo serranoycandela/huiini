@@ -251,11 +251,10 @@ class FacturaLocal(object):
             tipo = "Nómina"
         if clave_ps.startswith('841215'):
             tipo = "Institución Bancaria"
-        if clave_ps.startswith('841416') or clave_ps.startswith('841017') or clave_ps.startswith('8411'):
+        if clave_ps.startswith('841416') or clave_ps.startswith('841017') or (clave_ps.startswith('8411') and not clave_ps.startswith('84111505')):
             tipo = "Gastos Admin"
         if clave_ps.startswith('8011') or clave_ps.startswith('801015') or clave_ps.startswith('801016')or clave_ps.startswith('8016'):
             tipo = "Servcios Admin"
-
         if clave_ps.startswith('801315'):
             tipo = "Renta"
         if clave_ps.startswith('84131602'):
