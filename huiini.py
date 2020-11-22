@@ -3,10 +3,10 @@ from PySide2.QtCore import *
 from PySide2.QtCore import Qt
 from PySide2.QtGui import *
 from PySide2 import QtGui, QtCore, QtWidgets
-from PySide2.QtWidgets import QTableWidgetItem, QFileDialog, QProgressDialog, QMessageBox, QListView, QAbstractItemView, QTreeView
+from PySide2.QtWidgets import QTableWidgetItem, QFileDialog, QProgressDialog, QMessageBox, QListView, QAbstractItemView, QTreeView, QDialog, QVBoxLayout, QDialogButtonBox, QFileSystemModel
 import sys
 import guiV2
-from os import listdir
+from os import listdir, environ
 from os.path import isfile, join, basename
 import shutil
 import os
@@ -47,7 +47,62 @@ try:
 except NameError:  # We are the main py2exe script, not a module
     scriptDirectory = os.path.dirname(os.path.abspath(sys.argv[0]))
 
+class getFilesDlg(QDialog):
 
+	# sendPaths is a signal emitted by getPaths containing a list of file paths from
+	# the users selection via this dialog.
+	sendPaths = Signal(list)
+
+	def __init__(self, parent=None):
+		super(getFilesDlg, self).__init__(parent)
+
+		self.setMinimumSize(500,500)
+
+		self.fileDlgPaths = []
+
+		layout = QVBoxLayout()
+
+		self.btnBox = QDialogButtonBox(QDialogButtonBox.Ok |
+			QDialogButtonBox.Cancel)
+
+		self.btnBox.accepted.connect(self.getPaths)
+		self.btnBox.rejected.connect(self.close)
+
+		self.fsModel = QFileSystemModel()
+
+		self.treeView = QTreeView()
+		self.treeView.setSelectionMode(QTreeView.ExtendedSelection)
+
+		self.treeView.setModel(self.fsModel)
+		self.treeView.setColumnWidth(0, 361)
+		self.treeView.setColumnHidden(1, True)
+		self.treeView.setColumnHidden(3, True)
+
+		layout.addWidget(self.treeView)
+		layout.addWidget(self.btnBox)
+		self.setLayout(layout)
+
+		self.fsModel.setRootPath(environ['HOMEPATH'])
+		# self.treeView.setRootIndex(self.fsModel.index("\\"))
+		self.treeView.expand(self.treeView.rootIndex())
+
+
+	def getPaths(self):
+		# For some reason duplicates were being returned when they weren't supposed to.
+		# This obtains the selected files from the dialog and only returns individual
+		# paths.
+		indexes = self.treeView.selectedIndexes()
+		if indexes:
+			self.fileDlgPaths = []
+			for i in indexes:
+
+				# Possible permission error occuring here
+				# unable to replicate at this time
+				path = self.fsModel.filePath(i)
+				if path not in self.fileDlgPaths:
+					self.fileDlgPaths.append(path)
+			self.close() # To close the dialog on an accept signal
+			self.sendPaths.emit(self.fileDlgPaths)
 
 class ImgWidgetPalomita(QtWidgets.QLabel):
 
@@ -750,23 +805,26 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
     def cualCarpeta(self):
         self.folder.hide()
-        file_dialog = QFileDialog()
-        file_dialog.setFileMode(QFileDialog.DirectoryOnly)
-        file_dialog.setOption(QFileDialog.DontUseNativeDialog, True)
-        file_view = file_dialog.findChild(QListView, 'listView')
-
-        # to make it possible to select multiple directories:
-        if file_view:
-            file_view.setSelectionMode(QAbstractItemView.MultiSelection)
-        f_tree_view = file_dialog.findChild(QTreeView)
-        if f_tree_view:
-            f_tree_view.setSelectionMode(QAbstractItemView.MultiSelection)
-
-        if file_dialog.exec():
-            paths = file_dialog.selectedFiles()
-
-        self.procesaCarpetas(paths)
-
+        # file_dialog = QFileDialog()
+        # file_dialog.setFileMode(QFileDialog.DirectoryOnly)
+        # file_dialog.setOption(QFileDialog.DontUseNativeDialog, True)
+        # file_view = file_dialog.findChild(QListView, 'listView')
+        # f_tree_view = file_dialog.findChild(QTreeView, 'treeView')
+        # # to make it possible to select multiple directories:
+        # if file_view:
+        #     file_view.setSelectionMode(QAbstractItemView.MultiSelection)
+        # if f_tree_view:
+        #     f_tree_view.setSelectionMode(QAbstractItemView.MultiSelection)
+        #
+        # if file_dialog.exec():
+        #     paths = file_dialog.selectedFiles()
+        file_dialog = getFilesDlg()
+        file_dialog.sendPaths.connect(self.procesaCarpetas)
+        file_dialog.exec()
+        # paths = file_dialog.getPaths()
+        # self.procesaCarpetas(paths)
+    def procesaCarpetasFake(self,paths):
+        print(paths)
     def procesaCarpetas(self,paths):
         self.conceptos = []
         self.yaEstaba = {}
