@@ -836,14 +836,15 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         year = os.path.split(os.path.split(paths[0])[0])[1]
         client = os.path.split(os.path.split(os.path.split(paths[0])[0])[0])[1]
         print(client+"_"+year)
-        if len(paths) > 1:
-            reply = QMessageBox.question(self, 'Message',"Crear pdfs?", QMessageBox.Yes |
-            QMessageBox.No, QMessageBox.No)
 
-            if reply == QMessageBox.Yes:
-                self.hacerPDFs = True
-            else:
-                self.hacerPDFs = False
+        reply = QMessageBox.question(self, 'Message',"Crear pdfs?", QMessageBox.Yes |
+        QMessageBox.No, QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            self.hacerPDFs = True
+        else:
+            self.hacerPDFs = False
+
         self.annual_xlsx_path = os.path.join(year_folder, client+"_"+year + ".xlsx")
         if os.path.isfile(self.annual_xlsx_path):#borra el anterior
             os.remove(self.annual_xlsx_path)
