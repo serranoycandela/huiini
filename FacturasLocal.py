@@ -229,29 +229,61 @@ class FacturaLocal(object):
     def tipo_de_gasto(self, clave_ps):
         tipo = "Otros"
         first4 = clave_ps[0:4]
-        if clave_ps.startswith('7811') or clave_ps.startswith('9511') or clave_ps.startswith('1510') or clave_ps.startswith('1511') or clave_ps.startswith('1512'):
-            tipo = "Transporte"
-        if clave_ps.startswith('9010') or (int(first4) > 5000 and int(first4) < 5100 and not first4.startswith("5021") ):
+        if clave_ps.startswith('1510') or clave_ps.startswith('1511'):
+            tipo = "Combustible"
+        if clave_ps.startswith('7811'):
+            tipo = "Pasajes"
+        if clave_ps.startswith('9511'):
+            tipo = "Peajes"
+        if clave_ps.startswith('9010'):
+            tipo = "Consumo en Restaurante"
+        if (int(first4) > 5000 and int(first4) < 5100 and not first4.startswith("5021") ):
             tipo = "Alimentos"
         if clave_ps.startswith('9011'):
             tipo = "Hospedaje"
-        if clave_ps.startswith('811617') or clave_ps.startswith('831116') or clave_ps.startswith('811121'):
-            tipo = "Telecomunicaciones"
+        if clave_ps.startswith('811617') or clave_ps.startswith('831116'):
+            tipo = "Teléfono"
+        if clave_ps.startswith('811121'):
+            tipo = "Internet"
+        if clave_ps.startswith('431915') or clave_ps.startswith('4320') or clave_ps.startswith('4321'):#faltan compus
+            tipo = "Equipo de Computo"
         if clave_ps.startswith('84111505'):
             tipo = "Nómina"
         if clave_ps.startswith('841215'):
             tipo = "Institución Bancaria"
+        if clave_ps.startswith('841416') or clave_ps.startswith('841017') or clave_ps.startswith('8411'):
+            tipo = "Gastos Admin"
+        if clave_ps.startswith('8011') or clave_ps.startswith('801015') or clave_ps.startswith('801016')or clave_ps.startswith('8016'):
+            tipo = "Servcios Admin"
+
         if clave_ps.startswith('801315'):
             tipo = "Renta"
-        if clave_ps.startswith('841316'):
-            tipo = "Seguro"
-        if clave_ps.startswith('801618') or clave_ps.startswith('811618'):
+        if clave_ps.startswith('84131602'):
+            tipo = "Gasto Personal"
+        if clave_ps.startswith('801618') or clave_ps.startswith('811618') or clave_ps.startswith('821217'):
             tipo = "Renta de Equipo"
         if clave_ps.startswith('781022'):
             tipo = "Envios"
         if clave_ps.startswith('811122'):
             tipo = "Soporte Técnico"
-
+        if clave_ps.startswith('141115') or clave_ps.startswith('551015') or (clave_ps.startswith('6012') and not clave_ps.startswith('601216')):
+            tipo = "Papeleria"
+        if clave_ps.startswith('2517') or clave_ps.startswith('1512'):
+            tipo = "Mant. Auto"
+        if clave_ps.startswith('841315') or (clave_ps.startswith('841316') and not clave_ps.startswith('84131602')):
+            tipo = "Seguros"
+        if clave_ps.startswith('301715'):
+            tipo = "Mant. Oficina"
+        if clave_ps.startswith('951215') or clave_ps.startswith('78111807'):
+            tipo = "Estacionamiento"
+        if clave_ps.startswith('841016'):
+            tipo = "Donativos"
+        if clave_ps.startswith('80141607'):
+            tipo = "Gestion de Eventos"
+        if clave_ps.startswith('851017'):
+            tipo = "Politicas de Salud"
+        if clave_ps.startswith('4322'):
+            tipo = "Equipos Multimedia"
 
         return(tipo)
 
@@ -424,20 +456,30 @@ class FacturaLocal(object):
 
                         tipo = self.tipo_de_gasto(clave_concepto)
 
-
-
                         concepto_string = descripcion[:6]
 
                         print(concepto_string)
 
-                        try: #segun mcfly faltan retenciones
+                        try: #segun mcfly faltan retenciones para ingresos
+
                             ImpuestosTag = conceptoTag.find("{http://www.sat.gob.mx/cfd/3}Impuestos")
                             TrasladosTag = ImpuestosTag.findall("{http://www.sat.gob.mx/cfd/3}Traslados")
                             elPrimerTraslado = TrasladosTag[0]
                             trasladoTag = elPrimerTraslado.find("{http://www.sat.gob.mx/cfd/3}Traslado")
                             impuestos = trasladoTag.get("Importe")
+
                         except:
                             impuestos = 0
+
+                        try:
+                            print("----------------------===============================================================------------ descuento", conceptoTag.get("Descuento"))
+
+
+                            descuento = float(conceptoTag.get("Descuento"))
+                            print("-------------------------------------------------------------------------------------------------------------------- descuento", conceptoTag.get("Descuento"))
+
+                        except:
+                            descuento = 0
 
                         self.conceptos.append({"clave_concepto": clave_concepto,
                                                 "concepto": concepto_string,
@@ -447,6 +489,7 @@ class FacturaLocal(object):
                                                 "importeConcepto":importeConcepto,
                                                 "descripcion":descripcion,
                                                 "impuestos":impuestos,
+                                                "descuento":descuento,
                                                 "tipo":tipo})
 
 
