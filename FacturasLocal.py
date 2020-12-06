@@ -391,6 +391,7 @@ class FacturaLocal(object):
 
         self.subTotal = float(self.root.get(self.subTotalKey))
 
+
         self.descuento = self.latexStr(self.root.get(self.descuentoKey))
         try:
             self.descuento = float(self.descuento)
@@ -580,7 +581,7 @@ class FacturaLocal(object):
                             print("no pude sumar en " + self.UUID)
                             self.mensaje += " no pudo sumar un traslado"
 
-
+        self.importe = self.subTotal + self.traslados["IVA"]["importe"]
         #######################################################  COMPLEMENTO TAG   ########################################################
         if self.ComplementoTag == None:
             print("no hay comp")

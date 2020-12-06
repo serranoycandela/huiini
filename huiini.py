@@ -1,6 +1,6 @@
 #-*- encoding: utf-8 -*-
 from PySide2.QtCore import *
-from PySide2.QtCore import Qt
+from PySide2.QtCore import Qt, QDir
 from PySide2.QtGui import *
 from PySide2 import QtGui, QtCore, QtWidgets
 from PySide2.QtWidgets import QTableWidgetItem, QFileDialog, QProgressDialog, QMessageBox, QListView, QAbstractItemView, QTreeView, QDialog, QVBoxLayout, QDialogButtonBox, QFileSystemModel
@@ -49,60 +49,64 @@ except NameError:  # We are the main py2exe script, not a module
 
 class getFilesDlg(QDialog):
 
-	# sendPaths is a signal emitted by getPaths containing a list of file paths from
-	# the users selection via this dialog.
-	sendPaths = Signal(list)
+    # sendPaths is a signal emitted by getPaths containing a list of file paths from
+    # the users selection via this dialog.
+    sendPaths = Signal(list)
 
-	def __init__(self, parent=None):
-		super(getFilesDlg, self).__init__(parent)
+    def __init__(self, parent=None):
+        super(getFilesDlg, self).__init__(parent)
 
-		self.setMinimumSize(500,500)
+        self.setMinimumSize(520,500)
 
-		self.fileDlgPaths = []
+        self.fileDlgPaths = []
 
-		layout = QVBoxLayout()
+        layout = QVBoxLayout()
 
-		self.btnBox = QDialogButtonBox(QDialogButtonBox.Ok |
-			QDialogButtonBox.Cancel)
+        self.btnBox = QDialogButtonBox(QDialogButtonBox.Ok |
+        	QDialogButtonBox.Cancel)
 
-		self.btnBox.accepted.connect(self.getPaths)
-		self.btnBox.rejected.connect(self.close)
+        self.btnBox.accepted.connect(self.getPaths)
+        self.btnBox.rejected.connect(self.close)
 
-		self.fsModel = QFileSystemModel()
+        self.fsModel = QFileSystemModel()
+        self.fsModel.setFilter(QtCore.QDir.AllDirs|QtCore.QDir.NoDotAndDotDot)
 
-		self.treeView = QTreeView()
-		self.treeView.setSelectionMode(QTreeView.ExtendedSelection)
+        self.treeView = QTreeView()
+        self.treeView.setSelectionMode(QTreeView.ExtendedSelection)
 
-		self.treeView.setModel(self.fsModel)
-		self.treeView.setColumnWidth(0, 361)
-		self.treeView.setColumnHidden(1, True)
-		self.treeView.setColumnHidden(3, True)
+        self.treeView.setModel(self.fsModel)
+        self.treeView.setColumnWidth(0, 361)
+        self.treeView.setColumnHidden(1, True)
+        self.treeView.setColumnHidden(2, True)
+        self.fsModel.setRootPath("C:\\Dropbox (LANCIS)")
+        self.treeView.setSortingEnabled(True)
+        layout.addWidget(self.treeView)
+        layout.addWidget(self.btnBox)
+        self.setLayout(layout)
+        self.treeView.setRootIndex(self.fsModel.index("C:\\Dropbox (LANCIS)"))
+        # self.treeView.setRootIndex(self.fsModel.index("C:\\Dropbox"))
+        # self.treeView.expand(self.treeView.rootIndex())
+        #self.fsModel.setRootPath(environ['HOMEPATH'])
+        # self.treeView.setRootIndex(self.fsModel.index("\\"))
+        #self.treeView.expand(self.treeView.rootIndex())
 
-		layout.addWidget(self.treeView)
-		layout.addWidget(self.btnBox)
-		self.setLayout(layout)
 
-		self.fsModel.setRootPath(environ['HOMEPATH'])
-		# self.treeView.setRootIndex(self.fsModel.index("\\"))
-		self.treeView.expand(self.treeView.rootIndex())
+    def getPaths(self):
+    	# For some reason duplicates were being returned when they weren't supposed to.
+    	# This obtains the selected files from the dialog and only returns individual
+    	# paths.
+    	indexes = self.treeView.selectedIndexes()
+    	if indexes:
+    		self.fileDlgPaths = []
+    		for i in indexes:
 
-
-	def getPaths(self):
-		# For some reason duplicates were being returned when they weren't supposed to.
-		# This obtains the selected files from the dialog and only returns individual
-		# paths.
-		indexes = self.treeView.selectedIndexes()
-		if indexes:
-			self.fileDlgPaths = []
-			for i in indexes:
-
-				# Possible permission error occuring here
-				# unable to replicate at this time
-				path = self.fsModel.filePath(i)
-				if path not in self.fileDlgPaths:
-					self.fileDlgPaths.append(path)
-			self.close() # To close the dialog on an accept signal
-			self.sendPaths.emit(self.fileDlgPaths)
+    			# Possible permission error occuring here
+    			# unable to replicate at this time
+    			path = self.fsModel.filePath(i)
+    			if path not in self.fileDlgPaths:
+    				self.fileDlgPaths.append(path)
+    		self.close() # To close the dialog on an accept signal
+    		self.sendPaths.emit(self.fileDlgPaths)
 
 class ImgWidgetPalomita(QtWidgets.QLabel):
 
@@ -161,14 +165,14 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
         self.tableWidget_resumen.setColumnCount(10)
         self.tableWidget_resumen.setColumnWidth(0,30)
-        self.tableWidget_resumen.setColumnWidth(1,152)
-        self.tableWidget_resumen.setColumnWidth(2,192)
-        self.tableWidget_resumen.setColumnWidth(3,80)
+        self.tableWidget_resumen.setColumnWidth(1,122)
+        self.tableWidget_resumen.setColumnWidth(2,176)
+        self.tableWidget_resumen.setColumnWidth(3,75)
         self.tableWidget_resumen.setColumnWidth(4,80)
         self.tableWidget_resumen.setColumnWidth(5,80)
         self.tableWidget_resumen.setColumnWidth(6,80)
-        self.tableWidget_resumen.setColumnWidth(7,65)
-        self.tableWidget_resumen.setColumnWidth(8,65)
+        self.tableWidget_resumen.setColumnWidth(7,75)
+        self.tableWidget_resumen.setColumnWidth(8,75)
         self.tableWidget_resumen.setColumnWidth(9,80)
         self.tableWidget_resumen.setRowCount(2)
         #self.tableWidget_resumen.verticalHeader().setFixedWidth(35)
@@ -228,6 +232,75 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         ws.cell(sumas_row,1).fill = PatternFill(start_color="4ac6ff", end_color="4ac6ff", fill_type = "solid")
         ws.cell(sumas_row,1).border = cell_border
 
+    def style_ws_ingresos(self, ws, columna_totales, sumas_row):
+        cell_border = Border(left=Side(border_style=None, color='FF000000'),
+                     right=Side(border_style=None, color='FF000000'),
+                     top=Side(border_style='medium', color='FF000000'),
+                     bottom=Side(border_style='medium', color='FF000000'))
+
+        cell_border_sumas = Border(left=Side(border_style=None, color='FF000000'),
+                     right=Side(border_style=None, color='FF000000'),
+                     top=Side(border_style='thin', color='FF000000'),
+                     bottom=Side(border_style='thin', color='FF000000'))
+
+        for column in range(1,18):
+            cell = ws.cell(1,column)
+            cell.fill = PatternFill(start_color="8ccbff", end_color="8ccbff", fill_type = "solid")
+            cell.font = Font(bold=True)
+            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+            cell.border = cell_border
+
+        for column_cells in ws.columns:
+            #length = max(len(self.as_text(cell.value)) for cell in column_cells)
+            length = len(self.as_text(column_cells[0].value))
+            ws.column_dimensions[column_cells[0].column_letter].width = length+5
+
+        ws.column_dimensions['A'].width = 12
+
+        # for cell in ws['A']:
+        #     cell.font = Font(bold=True)
+
+
+
+        for column in range(1,18):
+            cell = ws.cell(sumas_row,column)
+            cell.border = cell_border_sumas
+            cell.font = Font(bold=True)
+
+
+        for i in range(2,sumas_row+1):
+            for j in range(8,14):
+                ws.cell(i,j).number_format = numbers.FORMAT_NUMBER_COMMA_SEPARATED1
+
+        for column in range(20,27):
+            cell = ws.cell(3,column)
+            cell.fill = PatternFill(start_color="8ccbff", end_color="8ccbff", fill_type = "solid")
+            cell.font = Font(bold=True)
+            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+            cell.border = cell_border
+            cell = ws.cell(20,column)
+            cell.fill = PatternFill(start_color="8ccbff", end_color="8ccbff", fill_type = "solid")
+            cell.font = Font(bold=True)
+            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+            cell.border = cell_border
+
+        for column in range(20,27):
+            cell = ws.cell(16,column)
+            cell.border = cell_border_sumas
+            cell.font = Font(bold=True)
+            cell = ws.cell(33,column)
+            cell.border = cell_border_sumas
+            cell.font = Font(bold=True)
+
+        ws.column_dimensions['T'].width = 12
+        ws.column_dimensions['U'].width = 12
+        ws.column_dimensions['V'].width = 12
+        ws.column_dimensions['W'].width = 12
+        ws.column_dimensions['X'].width = 12
+        ws.column_dimensions['Y'].width = 12
+        ws.column_dimensions['Z'].width = 12
+
+
 
     def calculaAgregados(self, df, ws_cats, variable):
         meses = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"]
@@ -273,6 +346,164 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         letra_sumas = get_column_letter(self.columna_totales)
         ws_cats.cell(self.sumas_row,self.columna_totales,"=SUM("+letra_sumas+"2:"+letra_sumas+str(self.sumas_row-1)  +")")
 
+    def hazTabDeIngresos(self,paths):
+        workbook = load_workbook(self.annual_xlsx_path)
+        if not "Ingresos" in workbook.sheetnames:
+            ws_ingresos = workbook.create_sheet("Ingresos")
+
+        ws_ingresos.cell(1, 1, "MesEmision")
+        ws_ingresos.cell(1, 2,     "MesPago")
+        ws_ingresos.cell(1, 3,     "uuid")
+        ws_ingresos.cell(1, 4,     "FECHA")
+        ws_ingresos.cell(1, 5,     "RFC (Receptor)")
+        ws_ingresos.cell(1, 6,     "RAZON SOCIAL")
+        ws_ingresos.cell(1, 7,     "DESCRIPCION")
+        ws_ingresos.cell(1, 8,     "SUBTOTAL")
+        ws_ingresos.cell(1, 9,     "I.V.A.")
+        ws_ingresos.cell(1, 10,     "IMPORTE")
+        ws_ingresos.cell(1, 11,     "RET ISR")
+        ws_ingresos.cell(1, 12,     "RET IVA")
+        ws_ingresos.cell(1, 13,     "T O T A L")
+        ws_ingresos.cell(1, 14,     "M-Pago")
+        ws_ingresos.cell(1, 15,     "Status")
+        ws_ingresos.cell(1, 16,     "complementosDePago")
+        ws_ingresos.cell(1, 17,     "Tipo")
+
+
+        row = 1
+        dv = DataValidation(type="list", formula1='"Pendiente,Pagado"', allowBlank=True)
+        ws_ingresos.add_data_validation(dv)
+        dv_mes = DataValidation(type="list", formula1='"ENERO,FEBRERO,MARZO,ABRIL,MAYO,JUNIO,JULIO,AGOSTO,SEPTIEMBRE,OCTUBRE,NOVIEMBRE,DICIEMBRE,--"', allow_blank=True)
+        ws_ingresos.add_data_validation(dv_mes)
+        meses = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"]
+        for factura in self.listaDeFacturasIngresos:
+
+            row += 1
+            numeroDeMes = int(factura.fechaTimbrado.split("-")[1])
+            dv_mes.add(ws_ingresos.cell(row, 1))
+            dv_mes.add(ws_ingresos.cell(row, 2))
+            ws_ingresos.cell(row, 1, meses[numeroDeMes-1])
+            if factura.metodoDePago == "PUE" or factura.tipoDeComprobante == "P":
+                ws_ingresos.cell(row, 2, meses[numeroDeMes-1])
+            if factura.UUID in self.complementosDePago:
+                numeroDeMesP = int(self.complementosDePago[factura.UUID]["fechaUltimoPago"].split("-")[1])
+                ws_ingresos.cell(row, 2, meses[numeroDeMesP-1])
+            ws_ingresos.cell(row, 3, factura.UUID)
+            ws_ingresos.cell(row, 4, factura.fechaTimbrado)
+            ws_ingresos.cell(row, 5, factura.ReceptorRFC)
+            ws_ingresos.cell(row, 6, factura.ReceptorNombre)
+            ws_ingresos.cell(row, 7, factura.conceptos[0]['descripcion'])
+            ws_ingresos.cell(row, 8, factura.subTotal)
+            ws_ingresos.cell(row, 9, factura.traslados["IVA"]["importe"])
+            ws_ingresos.cell(row, 10, factura.importe)
+            ws_ingresos.cell(row, 11, factura.retenciones["ISR"])
+            ws_ingresos.cell(row, 12, factura.retenciones["IVA"])
+            ws_ingresos.cell(row, 13, factura.total)
+            ws_ingresos.cell(row, 14, factura.metodoDePago)
+
+            status = "Pendiente"
+            if factura.metodoDePago == "PUE":
+                status = "Pagado"
+            if factura.metodoDePago == "PPD":
+                if factura.UUID in self.complementosDePago:
+                    if factura.total - self.complementosDePago[factura.UUID]["suma"] < 0.5:
+                        status = "Pagado"
+            if factura.tipoDeComprobante == "P":
+                status = "Pagado"
+
+            dv.add(ws_ingresos.cell(row, 15))
+            ws_ingresos.cell(row, 15, status)
+
+            if factura.UUID in self.complementosDePago:
+                ws_ingresos.cell(row, 16, self.complementosDePago[factura.UUID]["suma"])
+
+            if factura.tipoDeComprobante == "N":
+                ws_ingresos.cell(row, 17, "Nómina")
+
+
+        ws_ingresos.cell(row+1, 8, "=SUM(H2:H"+str(row)+")")
+        ws_ingresos.cell(row+1, 9, "=SUM(I2:I"+str(row)+")")
+        ws_ingresos.cell(row+1, 10, "=SUM(J2:J"+str(row)+")")
+        ws_ingresos.cell(row+1, 11, "=SUM(K2:K"+str(row)+")")
+        ws_ingresos.cell(row+1, 12, "=SUM(L2:L"+str(row)+")")
+        ws_ingresos.cell(row+1, 13, "=SUM(M2:M"+str(row)+")")
+
+        ws_ingresos.cell(3, 20, "Mes")
+        ws_ingresos.cell(3, 21, "SUBTOTAL")
+        ws_ingresos.cell(3, 22, "I.V.A.")
+        ws_ingresos.cell(3, 23, "IMPORTE")
+        ws_ingresos.cell(3, 24, "RET ISR")
+        ws_ingresos.cell(3, 25, "RET IVA")
+        ws_ingresos.cell(3, 26, "T O T A L")
+
+        ws_ingresos.cell(4, 20, "ENERO")
+        ws_ingresos.cell(5, 20, "FEBRERO")
+        ws_ingresos.cell(6, 20, "MARZO")
+        ws_ingresos.cell(7, 20, "ABRIL")
+        ws_ingresos.cell(8, 20, "MAYO")
+        ws_ingresos.cell(9, 20, "JUNIO")
+        ws_ingresos.cell(10, 20, "JULIO")
+        ws_ingresos.cell(11, 20, "AGOSTO")
+        ws_ingresos.cell(12, 20, "SEPTIEMBRE")
+        ws_ingresos.cell(13, 20, "OCTUBRE")
+        ws_ingresos.cell(14, 20, "NOVIEMBRE")
+        ws_ingresos.cell(15, 20, "DICIEMBRE")
+
+        for renglonMes in range(4,16):
+            ws_ingresos.cell(renglonMes, 21, '=SUMIFS(H:H,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"<>Nómina")')
+            ws_ingresos.cell(renglonMes, 22, '=SUMIFS(I:I,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"<>Nómina")')
+            ws_ingresos.cell(renglonMes, 23, '=SUMIFS(J:J,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"<>Nómina")')
+            ws_ingresos.cell(renglonMes, 24, '=SUMIFS(K:K,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"<>Nómina")')
+            ws_ingresos.cell(renglonMes, 25, '=SUMIFS(L:L,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"<>Nómina")')
+            ws_ingresos.cell(renglonMes, 26, '=SUMIFS(M:M,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"<>Nómina")')
+
+        ws_ingresos.cell(16, 21, "=SUM(U4:U15)")
+        ws_ingresos.cell(16, 22, "=SUM(V4:V15)")
+        ws_ingresos.cell(16, 23, "=SUM(W4:W15)")
+        ws_ingresos.cell(16, 24, "=SUM(X4:X15)")
+        ws_ingresos.cell(16, 25, "=SUM(Y4:Y15)")
+        ws_ingresos.cell(16, 26, "=SUM(Z4:Z15)")
+
+        ws_ingresos.cell(20, 20, "Mes")
+        ws_ingresos.cell(20, 21, "SUBTOTAL")
+        ws_ingresos.cell(20, 22, "I.V.A.")
+        ws_ingresos.cell(20, 23, "IMPORTE")
+        ws_ingresos.cell(20, 24, "RET ISR")
+        ws_ingresos.cell(20, 25, "RET IVA")
+        ws_ingresos.cell(20, 26, "T O T A L")
+
+        ws_ingresos.cell(21, 20, "ENERO")
+        ws_ingresos.cell(22, 20, "FEBRERO")
+        ws_ingresos.cell(23, 20, "MARZO")
+        ws_ingresos.cell(24, 20, "ABRIL")
+        ws_ingresos.cell(25, 20, "MAYO")
+        ws_ingresos.cell(26, 20, "JUNIO")
+        ws_ingresos.cell(27, 20, "JULIO")
+        ws_ingresos.cell(28, 20, "AGOSTO")
+        ws_ingresos.cell(29, 20, "SEPTIEMBRE")
+        ws_ingresos.cell(30, 20, "OCTUBRE")
+        ws_ingresos.cell(31, 20, "NOVIEMBRE")
+        ws_ingresos.cell(32, 20, "DICIEMBRE")
+
+        for renglonMes in range(21,33):
+            ws_ingresos.cell(renglonMes, 21, '=SUMIFS(H:H,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"Nómina")')
+            ws_ingresos.cell(renglonMes, 22, '=SUMIFS(I:I,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"Nómina")')
+            ws_ingresos.cell(renglonMes, 23, '=SUMIFS(J:J,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"Nómina")')
+            ws_ingresos.cell(renglonMes, 24, '=SUMIFS(K:K,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"Nómina")')
+            ws_ingresos.cell(renglonMes, 25, '=SUMIFS(L:L,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"Nómina")')
+            ws_ingresos.cell(renglonMes, 26, '=SUMIFS(M:M,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"Nómina")')
+
+        ws_ingresos.cell(33, 21, "=SUM(U21:U32)")
+        ws_ingresos.cell(33, 22, "=SUM(V21:V32)")
+        ws_ingresos.cell(33, 23, "=SUM(W21:W32)")
+        ws_ingresos.cell(33, 24, "=SUM(X21:X32)")
+        ws_ingresos.cell(33, 25, "=SUM(Y21:Y32)")
+        ws_ingresos.cell(33, 26, "=SUM(Z21:Z32)")
+
+        self.style_ws_ingresos(ws_ingresos,17,row+1)
+
+        workbook.save(self.annual_xlsx_path)
+
     def hazAgregados(self,paths):
         print(self.complementosDePago)
 
@@ -298,8 +529,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
                 if ws_mes.cell(row, 11).value == "PPD":#11 H
                     print("ajustaria"+ ws_mes.cell(row, 3).value)
                     if ws_mes.cell(row, 3).value in self.complementosDePago:
-                        ws_mes.cell(row, 15, self.complementosDePago[ws_mes.cell(row, 3).value])
-                        if ws_mes.cell(row, 9).value - self.complementosDePago[ws_mes.cell(row, 3).value] < 0.5:
+                        ws_mes.cell(row, 15, self.complementosDePago[ws_mes.cell(row, 3).value]["suma"])
+                        if ws_mes.cell(row, 9).value - self.complementosDePago[ws_mes.cell(row, 3).value]["suma"] < 0.5:
                             ws_mes.cell(row, 13, "Pagado")
 
         ws_todos.cell(1, 1, "mes")
@@ -404,15 +635,16 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
                 status = "Pagado"
             if factura.metodoDePago == "PPD":
                 if factura.UUID in self.complementosDePago:
-                    if factura.total - self.complementosDePago[factura.UUID] < 0.5:
+                    if factura.total - self.complementosDePago[factura.UUID]["suma"] < 0.5:
                         status = "Pagado"
             if factura.tipoDeComprobante == "P":
                 status = "Pagado"
+
             dv.add(ws_mes.cell(row, 13))
             ws_mes.cell(row, 13, status)
             ws_mes.cell(row, 14, factura.tipoDeComprobante)
             if factura.UUID in self.complementosDePago:
-                ws_mes.cell(row, 15, self.complementosDePago[factura.UUID])
+                ws_mes.cell(row, 15, self.complementosDePago[factura.UUID]["suma"])
 
             if factura.tipoDeComprobante == "P":
                 print("segun "+ factura.UUID + "del mes " +mes+ ", aqui buscaria en todos los meses el uuid "+factura.IdDocumento+" y si encuentra su factura modificaria, la columna 13 del renglon de esa factura en el mes que esté, a Pagado")
@@ -450,11 +682,11 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
                     new_cell = ws_rfc.cell(row, c)
                     new_cell._style = copy(cell._style)
             ws_rfc.cell(row, 3, key)
-            ws_rfc.cell(row, 8, value['total'])
+            ws_rfc.cell(row, 8, value['importe'])
             # ws_rfc.cell(row, 2, value['subTotal'])
             # ws_rfc.cell(row, 3, value['descuento'])
             # ws_rfc.cell(row, 4, value['trasladoIVA'])
-            ws_rfc.cell(row, 20, value['importe'])
+            ws_rfc.cell(row, 20, value['trasladoIVA'])
             # ws_rfc.cell(row, 6, value['total'])
         ws_rfc.cell(row+2, 8, "=SUM(H6:H"+str(row)+")")
         ws_rfc.cell(row+2, 20, "=SUM(T6:T"+str(row)+")")
@@ -805,26 +1037,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
     def cualCarpeta(self):
         self.folder.hide()
-        # file_dialog = QFileDialog()
-        # file_dialog.setFileMode(QFileDialog.DirectoryOnly)
-        # file_dialog.setOption(QFileDialog.DontUseNativeDialog, True)
-        # file_view = file_dialog.findChild(QListView, 'listView')
-        # f_tree_view = file_dialog.findChild(QTreeView, 'treeView')
-        # # to make it possible to select multiple directories:
-        # if file_view:
-        #     file_view.setSelectionMode(QAbstractItemView.MultiSelection)
-        # if f_tree_view:
-        #     f_tree_view.setSelectionMode(QAbstractItemView.MultiSelection)
-        #
-        # if file_dialog.exec():
-        #     paths = file_dialog.selectedFiles()
         file_dialog = getFilesDlg()
         file_dialog.sendPaths.connect(self.procesaCarpetas)
         file_dialog.exec()
-        # paths = file_dialog.getPaths()
-        # self.procesaCarpetas(paths)
-    def procesaCarpetasFake(self,paths):
-        print(paths)
+
     def procesaCarpetas(self,paths):
         self.conceptos = []
         self.yaEstaba = {}
@@ -849,31 +1065,32 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         if os.path.isfile(self.annual_xlsx_path):#borra el anterior
             os.remove(self.annual_xlsx_path)
 
+        self.listaDeFacturasIngresos = []
         for path in paths:
-            self.esteFolder = join(path,"EGRESOS")
+            self.procesaEgresos(path)
+            self.procesaIngresos(path)
+
+        self.hazTabDeIngresos(paths)
+
+        self.hazAgregados(paths)
+
+        self.raise_()
+        self.activateWindow()
+
+    def procesaIngresos(self, path):
+        self.esteFolder = join(path,"INGRESOS")
+        if os.path.isdir(self.esteFolder):
 
             self.mes = os.path.split(path)[1]
             self.mes = ''.join([i for i in self.mes if not i.isdigit()])
             self.mes = self.mes.strip()
-            self.meses.append(self.mes)
-            #self.conceptos[self.mes] = []
-            if not os.path.exists(join(self.esteFolder, "huiini")):
-                os.makedirs(join(self.esteFolder, "huiini"))
-            self.tableWidget_xml.clear()
-            self.tableWidget_resumen.clear()
-            self.tableWidget_resumen.repaint()
-            lc = ["Pdf","Fecha","UUID","Receptor","Emisor","Concepto","Subtotal","Descuento","Traslado\nIVA","Traslado\nIEPS","Retención\nIVA","Retención\nISR","Total","Forma\nPago","Método\nPago"]
-            self.ponEncabezado(lc)
-            self.tableWidget_xml.setRowCount(13)
-            self.tableWidget_xml.repaint()
             cuantosDuplicados = 0
-            self.listaDeDuplicados=[]
+            self.listaDeDuplicados = []
             self.listaDeFacturas = []
             self.listaDeUUIDs = []
             contador = 0
             for archivo in os.listdir(self.esteFolder):
-                if ".xml" in archivo:
-
+                if archivo.endswith(".xml"):
                     laFactura = Factura(join(self.esteFolder + os.sep,archivo))
                     if laFactura.sello == "SinSello":
                         print("Omitiendo xml sin sello "+laFactura.xml_path)
@@ -888,21 +1105,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
                                 contador += 1
                                 self.listaDeFacturas.append(laFactura)
 
-            if contador > 13:
-                self.tableWidget_xml.setRowCount(contador)
-
             self.listaDeFacturasOrdenadas = sorted(self.listaDeFacturas, key=lambda listaDeFacturas: listaDeFacturas.fechaTimbrado)
-            self.diccionarioPorRFCs = {}
-            print(self.listaDeFacturasOrdenadas)
-
-
-            self.pd =  QProgressDialog("Operation in progress.", "Cancel", 0, 100, self)
-            self.pd.setWindowTitle("Huiini")
-            self.pd.setValue(0)
-            self.pd.show()
-
             if cuantosDuplicados > 0:
-                mensaje = "hay "+str(cuantosDuplicados)+" duplicados\n"
+                mensaje = "En ingresos hay "+str(cuantosDuplicados)+" duplicados\n"
                 chunks = []
                 for esteDuplicado in self.listaDeDuplicados:
                     chunks.append(str(esteDuplicado)+"\n")
@@ -910,143 +1115,215 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
                 mensaje = mensaje + mensaje2
                 QMessageBox.information(self, "Information", mensaje)
 
+            # for t in range(0,5):
+            #     time_old.sleep(0.05*len(self.listaDeFacturasOrdenadas))
+            #     self.pd.setValue(self.pd.value() + ( (100 - self.pd.value()) / 2))
             contador = 0
-            for factura in self.listaDeFacturasOrdenadas:
-                self.pd.setValue(50*((contador + 1)/len(self.listaDeFacturasOrdenadas)))
-                factura.setFolio(contador + 1)
-                los_conceptos = factura.conceptos.copy()
-                for concepto in los_conceptos:
-                    concepto["mes"] = self.mes
-                    concepto["UUID"] = factura.UUID
-                    if concepto["impuestos"]:
-                        concepto["impuestos"] = float(concepto['impuestos'])
-                    else:
-                        concepto["impuestos"] = 0
-                self.conceptos.extend(los_conceptos)
 
+            los_facturas = self.listaDeFacturasOrdenadas.copy()
+            self.listaDeFacturasIngresos.extend(los_facturas)
+            for factura in self.listaDeFacturasOrdenadas:
+                #self.pd.setValue(50*((contador + 1)/len(self.listaDeFacturasOrdenadas)))
+                factura.setFolio(contador + 1)
                 if factura.tipoDeComprobante == "P":
                     if factura.IdDocumento in self.complementosDePago:
-                        self.complementosDePago[factura.IdDocumento] += factura.ImpPagado
+                        self.complementosDePago[factura.IdDocumento]["suma"] += factura.ImpPagado
                     else:
-                        self.complementosDePago[factura.IdDocumento] = factura.ImpPagado
+                        self.complementosDePago[factura.IdDocumento] = {}
+                        self.complementosDePago[factura.IdDocumento]["suma"] = factura.ImpPagado
 
-
-
-                self.pd.setLabelText("Procesando: " + factura.UUID[:17] + "...")
-
-                #url = "http://huiini.pythonanywhere.com/upload"
-                #url =  "%s/upload/%s/" % (url_server, self.hash_carpeta)
-
-                ####################################################Definir puerto  80 80   ################################
-                xml_path = factura.xml_path
-
-                #xml_path = 'C:/Users/SICAD/Dropbox/Araceli/2017/JUNIO/EGRESOS/DE820CD4-2F37-4751-9D38-0FD6947CB287.xml'
-                files = {'files': open(xml_path , 'rb')}
-                # print(r.content
-                # print(r.text)
-
-
-                self.tableWidget_xml.setItem(contador,1,self.esteItem(factura.fechaTimbrado,factura.fechaTimbrado))
-                self.tableWidget_xml.setItem(contador,2,self.esteItem(factura.UUID,factura.UUID))
-                self.tableWidget_xml.setItem(contador,3,self.esteItem(factura.ReceptorRFC,factura.ReceptorNombre))
-                self.tableWidget_xml.setItem(contador,4,self.esteItem(factura.EmisorRFC,factura.EmisorNombre))
-                mesage = ""
-                for concepto in factura.conceptos:
-                    mesage += concepto["descripcion"] + u'\n'
-                self.tableWidget_xml.setItem(contador,5, self.esteItem(factura.conceptos[0]['descripcion'],mesage))
-                self.tableWidget_xml.setItem(contador,6,self.esteItem(str(factura.subTotal),""))
-                self.tableWidget_xml.setItem(contador,7,self.esteItem(str(factura.descuento),""))
-                self.tableWidget_xml.setItem(contador,8,self.esteItem(str(factura.traslados["IVA"]["importe"]),""))
-                self.tableWidget_xml.setItem(contador,9,self.esteItem(str(factura.traslados["IEPS"]["importe"]),""))
-                self.tableWidget_xml.setItem(contador,10,self.esteItem(str(factura.retenciones["IVA"]),""))
-                self.tableWidget_xml.setItem(contador,11,self.esteItem(str(factura.retenciones["ISR"]),""))
-                self.tableWidget_xml.setItem(contador,12,self.esteItem(str(factura.total),""))
-                self.tableWidget_xml.setItem(contador,13,self.esteItem(factura.formaDePagoStr,""))
-                self.tableWidget_xml.setItem(contador,14, self.esteItem(factura.metodoDePago,factura.metodoDePago))
-
-                if factura.EmisorRFC in self.diccionarioPorRFCs:
-                    self.diccionarioPorRFCs[factura.EmisorRFC]['subTotal'] += float(factura.subTotal)
-                    self.diccionarioPorRFCs[factura.EmisorRFC]['descuento'] += float(factura.descuento)
-                    self.diccionarioPorRFCs[factura.EmisorRFC]['trasladoIVA'] += float(factura.traslados['IVA']['importe'])
-                    self.diccionarioPorRFCs[factura.EmisorRFC]['importe'] += float(factura.subTotal)-float(factura.descuento)
-                    self.diccionarioPorRFCs[factura.EmisorRFC]['total'] += float(factura.total)
-                    print("sumale " + str(factura.subTotal) )
-                else:
-                    self.diccionarioPorRFCs[factura.EmisorRFC] = {'subTotal': float(factura.subTotal),
-                                                                  'descuento': float(factura.descuento),
-                                                                  'trasladoIVA': float(factura.traslados['IVA']['importe']),
-                                                                  'importe': float(factura.subTotal)-float(factura.descuento),
-                                                                  'total': float(factura.total)
-                                                                }
-                    print("crealo con " + str(factura.subTotal))
-
-                contador +=1
-
-                # try:
-                #     r = requests.post (url, files=files,
-                #                        timeout=20,
-                #                        data={'folio' :contador + 1},
-                #                        auth=(self.w.username.text(), self.w.password.text()))
-                # except:
-                #     continue
-
-
-            #if contador == len(self.listaDeFacturasOrdenadas):
-
-            self.pd.show()
-            self.pd.setLabelText("Creando Resumen...")
-            for t in range(0,5):
-                time_old.sleep(0.05*len(self.listaDeFacturasOrdenadas))
-                self.pd.setValue(self.pd.value() + ( (100 - self.pd.value()) / 2))
-
-
+                    self.complementosDePago[factura.IdDocumento]["fechaUltimoPago"] = factura.fechaTimbrado
 
             if self.hacerPDFs:
                 self.hazPDFs()
+                time_old.sleep(0.2*len(self.listaDeFacturasOrdenadas))
+                self.borraAuxiliares()
+
+    def procesaEgresos(self, path):
+        self.esteFolder = join(path,"EGRESOS")
+
+        self.mes = os.path.split(path)[1]
+        self.mes = ''.join([i for i in self.mes if not i.isdigit()])
+        self.mes = self.mes.strip()
+        self.meses.append(self.mes) # aqui si self.mes no se puede formar correctamantre deberia dar un error y ventanita que lo explique
+        #self.conceptos[self.mes] = []
+        if not os.path.exists(join(self.esteFolder, "huiini")):
+            os.makedirs(join(self.esteFolder, "huiini"))
+        self.tableWidget_xml.clear()
+        self.tableWidget_resumen.clear()
+        self.tableWidget_resumen.repaint()
+        lc = ["Pdf","Fecha","UUID","Receptor","Emisor","Concepto","Subtotal","Descuento","Traslado\nIVA","Traslado\nIEPS","Retención\nIVA","Retención\nISR","Total","Forma\nPago","Método\nPago"]
+        self.ponEncabezado(lc)
+        self.tableWidget_xml.setRowCount(13)
+        self.tableWidget_xml.repaint()
+        cuantosDuplicados = 0
+        self.listaDeDuplicados= []
+        self.listaDeFacturas = []
+        self.listaDeUUIDs = []
+        contador = 0
+        for archivo in os.listdir(self.esteFolder):
+            if archivo.endswith(".xml"):
+
+                laFactura = Factura(join(self.esteFolder + os.sep,archivo))
+                if laFactura.sello == "SinSello":
+                    print("Omitiendo xml sin sello "+laFactura.xml_path)
+                else:
+                    if laFactura.version:
+                        if laFactura.UUID in self.listaDeUUIDs:
+
+                            cuantosDuplicados+=1
+                            self.listaDeDuplicados.append(laFactura.UUID)
+                        else:
+                            self.listaDeUUIDs.append(laFactura.UUID)
+                            contador += 1
+                            self.listaDeFacturas.append(laFactura)
+
+        if contador > 13:
+            self.tableWidget_xml.setRowCount(contador)
+
+        self.listaDeFacturasOrdenadas = sorted(self.listaDeFacturas, key=lambda listaDeFacturas: listaDeFacturas.fechaTimbrado)
+        self.diccionarioPorRFCs = {}
+        print(self.listaDeFacturasOrdenadas)
+
+
+        self.pd =  QProgressDialog("Operation in progress.", "Cancel", 0, 100, self)
+        self.pd.setWindowTitle("Huiini")
+        self.pd.setValue(0)
+        self.pd.show()
+
+        if cuantosDuplicados > 0:
+            mensaje = "En egresos hay "+str(cuantosDuplicados)+" duplicados\n"
+            chunks = []
+            for esteDuplicado in self.listaDeDuplicados:
+                chunks.append(str(esteDuplicado)+"\n")
+            mensaje2 = "".join(chunks)
+            mensaje = mensaje + mensaje2
+            QMessageBox.information(self, "Information", mensaje)
+
+        contador = 0
+        for factura in self.listaDeFacturasOrdenadas:
+            self.pd.setValue(50*((contador + 1)/len(self.listaDeFacturasOrdenadas)))
+            factura.setFolio(contador + 1)
+            los_conceptos = factura.conceptos.copy()
+            for concepto in los_conceptos:
+                concepto["mes"] = self.mes
+                concepto["UUID"] = factura.UUID
+                if concepto["impuestos"]:
+                    concepto["impuestos"] = float(concepto['impuestos'])
+                else:
+                    concepto["impuestos"] = 0
+            self.conceptos.extend(los_conceptos)
+
+            if factura.tipoDeComprobante == "P":
+                if factura.IdDocumento in self.complementosDePago:
+                    self.complementosDePago[factura.IdDocumento]["suma"] += factura.ImpPagado
+                else:
+                    self.complementosDePago[factura.IdDocumento] = {}
+                    self.complementosDePago[factura.IdDocumento]["suma"] = factura.ImpPagado
+
+                self.complementosDePago[factura.IdDocumento]["fechaUltimoPago"] = factura.fechaTimbrado
+
+            if factura.tipoDeComprobante == "N":
+                self.listaDeFacturasIngresos.append(factura)
+            self.pd.setLabelText("Procesando: " + factura.UUID[:17] + "...")
+
+            #url = "http://huiini.pythonanywhere.com/upload"
+            #url =  "%s/upload/%s/" % (url_server, self.hash_carpeta)
+
+            ####################################################Definir puerto  80 80   ################################
+            xml_path = factura.xml_path
+
+            #xml_path = 'C:/Users/SICAD/Dropbox/Araceli/2017/JUNIO/EGRESOS/DE820CD4-2F37-4751-9D38-0FD6947CB287.xml'
+            files = {'files': open(xml_path , 'rb')}
+            # print(r.content
+            # print(r.text)
+
+
+            self.tableWidget_xml.setItem(contador,1,self.esteItem(factura.fechaTimbrado,factura.fechaTimbrado))
+            self.tableWidget_xml.setItem(contador,2,self.esteItem(factura.UUID,factura.UUID))
+            self.tableWidget_xml.setItem(contador,3,self.esteItem(factura.ReceptorRFC,factura.ReceptorNombre))
+            self.tableWidget_xml.setItem(contador,4,self.esteItem(factura.EmisorRFC,factura.EmisorNombre))
+            mesage = ""
+            for concepto in factura.conceptos:
+                mesage += concepto["descripcion"] + u'\n'
+            self.tableWidget_xml.setItem(contador,5, self.esteItem(factura.conceptos[0]['descripcion'],mesage))
+            self.tableWidget_xml.setItem(contador,6,self.esteItem(str(factura.subTotal),""))
+            self.tableWidget_xml.setItem(contador,7,self.esteItem(str(factura.descuento),""))
+            self.tableWidget_xml.setItem(contador,8,self.esteItem(str(factura.traslados["IVA"]["importe"]),""))
+            self.tableWidget_xml.setItem(contador,9,self.esteItem(str(factura.traslados["IEPS"]["importe"]),""))
+            self.tableWidget_xml.setItem(contador,10,self.esteItem(str(factura.retenciones["IVA"]),""))
+            self.tableWidget_xml.setItem(contador,11,self.esteItem(str(factura.retenciones["ISR"]),""))
+            self.tableWidget_xml.setItem(contador,12,self.esteItem(str(factura.total),""))
+            self.tableWidget_xml.setItem(contador,13,self.esteItem(factura.formaDePagoStr,""))
+            self.tableWidget_xml.setItem(contador,14, self.esteItem(factura.metodoDePago,factura.metodoDePago))
+
+            if factura.EmisorRFC in self.diccionarioPorRFCs:
+                self.diccionarioPorRFCs[factura.EmisorRFC]['subTotal'] += float(factura.subTotal)
+                self.diccionarioPorRFCs[factura.EmisorRFC]['descuento'] += float(factura.descuento)
+                self.diccionarioPorRFCs[factura.EmisorRFC]['trasladoIVA'] += float(factura.traslados['IVA']['importe'])
+                self.diccionarioPorRFCs[factura.EmisorRFC]['importe'] += float(factura.subTotal)-float(factura.descuento)
+                self.diccionarioPorRFCs[factura.EmisorRFC]['total'] += float(factura.total)
+                print("sumale " + str(factura.subTotal) )
+            else:
+                self.diccionarioPorRFCs[factura.EmisorRFC] = {'subTotal': float(factura.subTotal),
+                                                              'descuento': float(factura.descuento),
+                                                              'trasladoIVA': float(factura.traslados['IVA']['importe']),
+                                                              'importe': float(factura.subTotal)-float(factura.descuento),
+                                                              'total': float(factura.total)
+                                                            }
+                print("crealo con " + str(factura.subTotal))
+
+            contador +=1
 
 
 
-            contador = -1
-
-            # time_old.sleep(0.5*len(self.listaDeFacturasOrdenadas))
-
-            self.imprimir.setEnabled(True)
-
-            self.numeroDeFacturasValidas = len(self.listaDeFacturasOrdenadas)
+        self.pd.show()
+        self.pd.setLabelText("Creando Resumen...")
+        # for t in range(0,5):
+        #     time_old.sleep(0.05*len(self.listaDeFacturasOrdenadas))
+        #     self.pd.setValue(self.pd.value() + ( (100 - self.pd.value()) / 2))
 
 
-            self.sumale()
-            self.pd.setLabelText("Carpeta procesada")
-            self.pd.setValue(self.pd.value() + ( (100 - self.pd.value()) / 2))
-            self.hazResumenDiot(self.esteFolder)
-            #if len(paths)>2:
-            self.agregaMes(self.mes)
-            self.pd.setValue(100)
-            self.tableWidget_resumen.setItem(0,1,QTableWidgetItem("Resumen Diot"))
-            self.tableWidget_resumen.setItem(0,2,QTableWidgetItem("Sumatoria del Periodo"))
-            self.tableWidget_resumen.setCellWidget(0,0, ImgWidgetPalomita(self))
-
-            #obtener los warnings de las facturas
-            mensajeAlerta =""
-            for factura in self.listaDeFacturasOrdenadas:
-                if not factura.mensaje == "":
-                    mensajeAlerta += factura.UUID + factura.mensaje + r'\n'
-            if not mensajeAlerta == "":
-                QMessageBox.information(self, "Information", mensajeAlerta)
-
-
-
-
-            self.folder.setText("Carpeta Procesada: " + u'\n' + self.esteFolder)
-            self.folder.show()
 
         if self.hacerPDFs:
+            self.hazPDFs()
+            time_old.sleep(0.2*len(self.listaDeFacturasOrdenadas))
             self.borraAuxiliares()
-        self.hazAgregados(paths)
 
-        self.raise_()
-        self.activateWindow()
 
+        contador = -1
+
+        # time_old.sleep(0.5*len(self.listaDeFacturasOrdenadas))
+
+        self.imprimir.setEnabled(True)
+
+        self.numeroDeFacturasValidas = len(self.listaDeFacturasOrdenadas)
+
+
+        self.sumale()
+        self.pd.setLabelText("Carpeta procesada")
+        self.pd.setValue(self.pd.value() + ( (100 - self.pd.value()) / 2))
+        self.hazResumenDiot(self.esteFolder)
+        #if len(paths)>2:
+        self.agregaMes(self.mes)
+        self.pd.setValue(100)
+        self.tableWidget_resumen.setItem(0,1,QTableWidgetItem("Resumen Diot"))
+        self.tableWidget_resumen.setItem(0,2,QTableWidgetItem("Sumatoria del Periodo"))
+        self.tableWidget_resumen.setCellWidget(0,0, ImgWidgetPalomita(self))
+
+        #obtener los warnings de las facturas
+        mensajeAlerta =""
+        for factura in self.listaDeFacturasOrdenadas:
+            if not factura.mensaje == "":
+                mensajeAlerta += factura.UUID + factura.mensaje + r'\n'
+        if not mensajeAlerta == "":
+            QMessageBox.information(self, "Information", mensajeAlerta)
+
+
+
+
+        self.folder.setText("Carpeta Procesada: " + u'\n' + self.esteFolder)
+        self.folder.show()
 
 app = QtWidgets.QApplication(sys.argv)
 form = Ui_MainWindow()
