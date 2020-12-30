@@ -3,7 +3,7 @@ from PySide2.QtCore import *
 from PySide2.QtCore import Qt, QDir
 from PySide2.QtGui import *
 from PySide2 import QtGui, QtCore, QtWidgets
-from PySide2.QtWidgets import QTableWidgetItem, QFileDialog, QProgressDialog, QMessageBox, QListView, QAbstractItemView, QTreeView, QDialog, QVBoxLayout, QDialogButtonBox, QFileSystemModel
+from PySide2.QtWidgets import QLineEdit, QTableWidgetItem, QFileDialog, QProgressDialog, QMessageBox, QListView, QAbstractItemView, QTreeView, QDialog, QVBoxLayout, QDialogButtonBox, QFileSystemModel, QInputDialog
 import sys
 import guiV2
 from os import listdir, environ
@@ -78,12 +78,12 @@ class getFilesDlg(QDialog):
         self.treeView.setColumnWidth(0, 361)
         self.treeView.setColumnHidden(1, True)
         self.treeView.setColumnHidden(2, True)
-        self.fsModel.setRootPath("C:\\Dropbox (LANCIS)")
+        self.fsModel.setRootPath("")
         self.treeView.setSortingEnabled(True)
         layout.addWidget(self.treeView)
         layout.addWidget(self.btnBox)
         self.setLayout(layout)
-        self.treeView.setRootIndex(self.fsModel.index("C:\\Dropbox (LANCIS)"))
+        self.treeView.setRootIndex(self.fsModel.index(""))
         # self.treeView.setRootIndex(self.fsModel.index("C:\\Dropbox"))
         # self.treeView.expand(self.treeView.rootIndex())
         #self.fsModel.setRootPath(environ['HOMEPATH'])
@@ -136,6 +136,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         self.pdflatex_path = "C:/Program Files/MiKTeX 2.9/miktex/bin/x64/pdflatex.exe"
 
         self.carpetaChooser.clicked.connect(self.cualCarpeta)
+        self.agrega_cats.clicked.connect(self.agrega_categorias)
         #self.descarga_bt.clicked.connect(self.descarga_mesta)
         self.imprimir.clicked.connect(self.imprime)
 
@@ -186,6 +187,35 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
         self.tableWidget_xml.cellDoubleClicked.connect(self.meDoblePicaronXML)
         self.tableWidget_resumen.cellDoubleClicked.connect(self.meDoblePicaronResumen)
+
+    def agrega_categorias(self):
+        folder_cliente = os.path.split(os.path.split(self.paths[0])[0])[0]
+        json_path = join(folder_cliente,"categorias_huiini.json")
+        if os.path.exists(json_path):
+            with open(json_path, "r") as jsonfile:
+                lista_de_tuplas = json.load(jsonfile)
+        else:
+            lista_de_tuplas = []
+
+
+
+        nombre, ok = QInputDialog().getText(self, "Nombre de la Categoría",
+                                     "Nombre de la categoría:", QLineEdit.Normal,
+                                     QDir().home().dirName())
+        claves_ps, ok = QInputDialog().getText(self, "Lista de claves de producto o servicio",
+                                     "clave_ps:", QLineEdit.Normal,
+                                     QDir().home().dirName())
+
+        claves_ps.strip()
+
+        for clave in claves_ps.split(","):
+            lista_de_tuplas.append([clave,nombre])
+        with open(json_path, "w") as jsonfile:
+            json.dump(lista_de_tuplas, jsonfile)
+
+
+
+
 
     def as_text(self,value):
         if value is None:
@@ -303,11 +333,11 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
 
     def calculaAgregados(self, df, ws_cats, variable):
-        meses = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"]
+
         por_categorias = df.groupby(['mes', 'tipo'], as_index=False).agg({variable:sum})
         por_categorias_wide = por_categorias.pivot_table(index="mes",columns=['tipo'],values=variable,fill_value= 0)
         por_categorias_wide.reset_index(inplace=True)
-        por_categorias_wide['mes'] = pd.Categorical(por_categorias_wide['mes'], meses)
+        por_categorias_wide['mes'] = pd.Categorical(por_categorias_wide['mes'], self.todos_los_meses)
         por_categorias_wide = por_categorias_wide.sort_values("mes")
         por_categorias_wide['mes'] = por_categorias_wide.mes.astype(str)
         for r in dataframe_to_rows(por_categorias_wide, index=False, header=True):
@@ -375,19 +405,19 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         ws_ingresos.add_data_validation(dv)
         dv_mes = DataValidation(type="list", formula1='"ENERO,FEBRERO,MARZO,ABRIL,MAYO,JUNIO,JULIO,AGOSTO,SEPTIEMBRE,OCTUBRE,NOVIEMBRE,DICIEMBRE,--"', allow_blank=True)
         ws_ingresos.add_data_validation(dv_mes)
-        meses = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"]
+
         for factura in self.listaDeFacturasIngresos:
 
             row += 1
             numeroDeMes = int(factura.fechaTimbrado.split("-")[1])
             dv_mes.add(ws_ingresos.cell(row, 1))
             dv_mes.add(ws_ingresos.cell(row, 2))
-            ws_ingresos.cell(row, 1, meses[numeroDeMes-1])
+            ws_ingresos.cell(row, 1, self.todos_los_meses[numeroDeMes-1])
             if factura.metodoDePago == "PUE" or factura.tipoDeComprobante == "P":
-                ws_ingresos.cell(row, 2, meses[numeroDeMes-1])
+                ws_ingresos.cell(row, 2, self.todos_los_meses[numeroDeMes-1])
             if factura.UUID in self.complementosDePago:
                 numeroDeMesP = int(self.complementosDePago[factura.UUID]["fechaUltimoPago"].split("-")[1])
-                ws_ingresos.cell(row, 2, meses[numeroDeMesP-1])
+                ws_ingresos.cell(row, 2, self.todos_los_meses[numeroDeMesP-1])
             ws_ingresos.cell(row, 3, factura.UUID)
             ws_ingresos.cell(row, 4, factura.fechaTimbrado)
             ws_ingresos.cell(row, 5, factura.ReceptorRFC)
@@ -902,12 +932,12 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
     def meDoblePicaronResumen(self, row,column):
         print("me picaron en : " +str(row)+", " +str(column))
-        excel = join(join(self.esteFolder,"huiini"),"resumen.xlsx")
+        #excel = join(join(self.esteFolder,"huiini"),"resumen.xlsx")
         #acrobatPath = r'C:/Program Files (x86)/Adobe/Acrobat Reader DC/Reader/AcroRd32.exe'
         #subprocess.Popen("%s %s" % (acrobatPath, pdf))
         try:
-            os.startfile(excel)
-            print("este guey me pico:"+excel)
+            os.startfile(self.excel_path)
+            print("este guey me pico:"+self.excel_path)
         except:
             print ("el sistema no tiene una aplicacion por default para abrir exceles")
             QMessageBox.information(self, "Information", "El sistema no tiene una aplicación por default para abrir exceles" )
@@ -1042,45 +1072,115 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         file_dialog.exec()
 
     def procesaCarpetas(self,paths):
+        self.paths = paths.copy()
+
+        self.todos_los_meses = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"]
         self.conceptos = []
         self.yaEstaba = {}
         self.complementosDePago = {}
         self.meses = []
         print(paths[0])
         year_folder = os.path.split(paths[0])[0]
-        print(year_folder)
-        year = os.path.split(os.path.split(paths[0])[0])[1]
-        client = os.path.split(os.path.split(os.path.split(paths[0])[0])[0])[1]
-        print(client+"_"+year)
+        same_year = True
+        no_son_meses = False
 
-        reply = QMessageBox.question(self, 'Message',"Crear pdfs?", QMessageBox.Yes |
-        QMessageBox.No, QMessageBox.No)
 
-        if reply == QMessageBox.Yes:
-            self.hacerPDFs = True
-        else:
-            self.hacerPDFs = False
-
-        self.annual_xlsx_path = os.path.join(year_folder, client+"_"+year + ".xlsx")
-        if os.path.isfile(self.annual_xlsx_path):#borra el anterior
-            os.remove(self.annual_xlsx_path)
-
-        self.listaDeFacturasIngresos = []
         for path in paths:
-            self.procesaEgresos(path)
-            self.procesaIngresos(path)
+            mes = os.path.split(path)[1]
+            mes = ''.join([i for i in mes if not i.isdigit()])
+            mes = mes.strip()
+            if not mes in self.todos_los_meses:
+                no_son_meses = True
+            if year_folder != os.path.split(path)[0]:
+                same_year = False
 
-        self.hazTabDeIngresos(paths)
+        if not same_year or no_son_meses:
+            if no_son_meses:
+                QMessageBox.information(self, "Información", "no son meses")
+            else:
+                QMessageBox.information(self, "Información", "no son el mismo año")
+        else:
+            print(year_folder)
+            year = os.path.split(os.path.split(paths[0])[0])[1]
+            client = os.path.split(os.path.split(os.path.split(paths[0])[0])[0])[1]
+            print(client+"_"+year)
 
-        self.hazAgregados(paths)
+            reply = QMessageBox.question(self, 'Message',"Crear pdfs?", QMessageBox.Yes |
+            QMessageBox.No, QMessageBox.No)
 
-        self.raise_()
-        self.activateWindow()
+            if reply == QMessageBox.Yes:
+                self.hacerPDFs = True
+            else:
+                self.hacerPDFs = False
+
+            self.annual_xlsx_path = os.path.join(year_folder, client+"_"+year + ".xlsx")
+            if os.path.isfile(self.annual_xlsx_path):#borra el anterior
+                os.remove(self.annual_xlsx_path)
+
+            if len(self.paths) > 1:
+                self.excel_path = self.annual_xlsx_path
+            else:
+                self.excel_path = join(self.paths[0],"EGRESOS","huiini","resumen.xlsx")
+
+            self.listaDeFacturasIngresos = []
+            for path in paths:
+                self.procesaEgresos(path)
+                self.pon_categorias_custom_por_factura(paths)
+                self.agregaMes(self.mes)
+                self.procesaIngresos(path)
+
+
+            self.hazTabDeIngresos(paths)
+
+            self.pon_categorias_custom_por_concepto(paths)
+            self.hazAgregados(paths)
+            self.agrega_cats.setEnabled(True)
+            self.raise_()
+            self.activateWindow()
+
+    def pon_categorias_custom_por_factura(self,paths):
+
+        folder_cliente = os.path.split(os.path.split(paths[0])[0])[0]
+        json_path = join(folder_cliente,"categorias_huiini.json")
+        hay_categorias_custom = False
+        if os.path.exists(json_path):
+            hay_categorias_custom = True
+            with open(json_path, "r") as jsonfile:
+                self.lista_de_empiezos = json.load(jsonfile)
+
+
+        if hay_categorias_custom:
+            for factura in self.listaDeFacturasOrdenadas:
+                for concepto in factura.conceptos:
+                    clave = concepto["clave_concepto"]
+
+                    for empiezo in self.lista_de_empiezos:
+                        if clave.startswith(empiezo[0]):
+                            concepto["tipo"] = empiezo[1]
+
+
+    def pon_categorias_custom_por_concepto(self,paths):
+        folder_cliente = os.path.split(os.path.split(paths[0])[0])[0]
+        json_path = join(folder_cliente,"categorias_huiini.json")
+        hay_categorias_custom = False
+        if os.path.exists(json_path):
+            hay_categorias_custom = True
+            with open(json_path, "r") as jsonfile:
+                self.lista_de_empiezos = json.load(jsonfile)
+
+
+        if hay_categorias_custom:
+            for concepto in self.conceptos:
+                clave = concepto["clave_concepto"]
+                for empiezo in self.lista_de_empiezos:
+                    if clave.startswith(empiezo[0]):
+                        concepto["tipo"] = empiezo[1]
 
     def procesaIngresos(self, path):
         self.esteFolder = join(path,"INGRESOS")
         if os.path.isdir(self.esteFolder):
-
+            if not os.path.exists(join(self.esteFolder, "huiini")):
+                os.makedirs(join(self.esteFolder, "huiini"))
             self.mes = os.path.split(path)[1]
             self.mes = ''.join([i for i in self.mes if not i.isdigit()])
             self.mes = self.mes.strip()
@@ -1305,7 +1405,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         self.pd.setValue(self.pd.value() + ( (100 - self.pd.value()) / 2))
         self.hazResumenDiot(self.esteFolder)
         #if len(paths)>2:
-        self.agregaMes(self.mes)
+
         self.pd.setValue(100)
         self.tableWidget_resumen.setItem(0,1,QTableWidgetItem("Resumen Diot"))
         self.tableWidget_resumen.setItem(0,2,QTableWidgetItem("Sumatoria del Periodo"))

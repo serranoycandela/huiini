@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'mainwindowV2.ui',
 # licensing of 'mainwindowV2.ui' applies.
 #
-# Created: Fri Nov  6 11:21:48 2020
+# Created: Thu Dec 17 21:53:30 2020
 #      by: pyside2-uic  running on PySide2 5.13.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -59,9 +59,10 @@ class Ui_MainWindow(object):
         self.labelLogo.setGeometry(QtCore.QRect(80, 520, 131, 91))
         self.labelLogo.setText("")
         self.labelLogo.setObjectName("labelLogo")
-        self.descarga_bt = QtWidgets.QPushButton(self.centralWidget)
-        self.descarga_bt.setGeometry(QtCore.QRect(50, 470, 171, 23))
-        self.descarga_bt.setObjectName("descarga_bt")
+        self.agrega_cats = QtWidgets.QPushButton(self.centralWidget)
+        self.agrega_cats.setEnabled(False)
+        self.agrega_cats.setGeometry(QtCore.QRect(50, 470, 171, 31))
+        self.agrega_cats.setObjectName("agrega_cats")
         self.botonCancela = QtWidgets.QPushButton(self.centralWidget)
         self.botonCancela.setGeometry(QtCore.QRect(700, 580, 111, 31))
         self.botonCancela.setObjectName("botonCancela")
@@ -86,6 +87,6 @@ class Ui_MainWindow(object):
         self.impresora.setText(QtWidgets.QApplication.translate("MainWindow", "Selecciona Impresora", None, -1))
         self.imprimir.setText(QtWidgets.QApplication.translate("MainWindow", "Imprimir", None, -1))
         self.tableWidget_xml.setSortingEnabled(True)
-        self.descarga_bt.setText(QtWidgets.QApplication.translate("MainWindow", "Descarga SAT", None, -1))
+        self.agrega_cats.setText(QtWidgets.QApplication.translate("MainWindow", "Agrega categorías", None, -1))
         self.botonCancela.setText(QtWidgets.QApplication.translate("MainWindow", "Cancelar impresión", None, -1))
 

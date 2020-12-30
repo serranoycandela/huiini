@@ -152,17 +152,20 @@
      <string/>
     </property>
    </widget>
-   <widget class="QPushButton" name="descarga_bt">
+   <widget class="QPushButton" name="agrega_cats">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>50</x>
       <y>470</y>
       <width>171</width>
-      <height>23</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="text">
-     <string>Descarga SAT</string>
+     <string>Agrega categorías</string>
     </property>
    </widget>
    <widget class="QPushButton" name="botonCancela">
