@@ -458,6 +458,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         ws_ingresos.cell(row+1, 12, "=SUM(L2:L"+str(row)+")")
         ws_ingresos.cell(row+1, 13, "=SUM(M2:M"+str(row)+")")
 
+        ws_ingresos.cell(2, 23, "Facturado")#bajo protesta
         ws_ingresos.cell(3, 20, "Mes")
         ws_ingresos.cell(3, 21, "SUBTOTAL")
         ws_ingresos.cell(3, 22, "I.V.A.")
@@ -494,6 +495,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         ws_ingresos.cell(16, 25, "=SUM(Y4:Y15)")
         ws_ingresos.cell(16, 26, "=SUM(Z4:Z15)")
 
+
+        ws_ingresos.cell(19, 23, "Nómina")
         ws_ingresos.cell(20, 20, "Mes")
         ws_ingresos.cell(20, 21, "SUBTOTAL")
         ws_ingresos.cell(20, 22, "I.V.A.")
