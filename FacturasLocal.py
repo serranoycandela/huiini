@@ -169,6 +169,8 @@ class FacturaLocal(object):
             self.sumale()
             self.setForma()
 
+        
+
 
     def setForma(self):
         dictForma = {"01":"Efectivo",

@@ -4,6 +4,7 @@ from PySide2.QtCore import Qt, QDir
 from PySide2.QtGui import *
 from PySide2 import QtGui, QtCore, QtWidgets
 from PySide2.QtWidgets import QLineEdit, QTableWidgetItem, QFileDialog, QProgressDialog, QMessageBox, QListView, QAbstractItemView, QTreeView, QDialog, QVBoxLayout, QDialogButtonBox, QFileSystemModel, QInputDialog
+from PySide2.QtWidgets import QPushButton, QListWidget, QListWidgetItem
 import sys
 import guiV2
 from os import listdir, environ
@@ -47,6 +48,22 @@ try:
 except NameError:  # We are the main py2exe script, not a module
     scriptDirectory = os.path.dirname(os.path.abspath(sys.argv[0]))
 
+class categorias_widget(QDialog):
+    def __init__(self, parent=None):
+        super(categorias_widget, self).__init__(parent)
+        self.setMinimumSize(520, 850)
+        layout = QVBoxLayout()
+        self.add_button = QPushButton("Nueva")
+        layout.addWidget(self.add_button)
+        self.edit_button = QPushButton("Editar")
+        layout.addWidget(self.edit_button)
+        self.remove_button = QPushButton("Eliminar")
+        layout.addWidget(self.remove_button)
+        self.myListWidget = QListWidget()
+        layout.addWidget(self.myListWidget)
+        self.setLayout(layout)
+
+
 class getFilesDlg(QDialog):
 
     # sendPaths is a signal emitted by getPaths containing a list of file paths from
@@ -56,20 +73,19 @@ class getFilesDlg(QDialog):
     def __init__(self, parent=None):
         super(getFilesDlg, self).__init__(parent)
 
-        self.setMinimumSize(520,500)
+        self.setMinimumSize(520,850)
 
         self.fileDlgPaths = []
 
         layout = QVBoxLayout()
 
-        self.btnBox = QDialogButtonBox(QDialogButtonBox.Ok |
-        	QDialogButtonBox.Cancel)
+        self.btnBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 
         self.btnBox.accepted.connect(self.getPaths)
         self.btnBox.rejected.connect(self.close)
 
         self.fsModel = QFileSystemModel()
-        self.fsModel.setFilter(QtCore.QDir.AllDirs|QtCore.QDir.NoDotAndDotDot)
+        self.fsModel.setFilter(QtCore.QDir.AllDirs | QtCore.QDir.NoDotAndDotDot)
 
         self.treeView = QTreeView()
         self.treeView.setSelectionMode(QTreeView.ExtendedSelection)
@@ -84,6 +100,23 @@ class getFilesDlg(QDialog):
         layout.addWidget(self.btnBox)
         self.setLayout(layout)
         self.treeView.setRootIndex(self.fsModel.index(""))
+        home = os.path.expanduser('~')
+        pdflatex_folder_path = os.path.join(home, 'Documents', 'huiini')
+        self.huiini_home_folder_path = ""
+        if os.path.exists(os.path.join(pdflatex_folder_path,"huiini_home_folder_path.txt")):
+            with open(os.path.join(pdflatex_folder_path,"huiini_home_folder_path.txt")) as f:
+                self.huiini_home_folder_path = f.readline()
+        print(self.huiini_home_folder_path)
+
+
+        path_restante = self.huiini_home_folder_path
+        while path_restante != os.path.split(path_restante)[0]:
+            index_previo = self.fsModel.index(path_restante)
+            self.treeView.expand(index_previo)
+            path_restante = os.path.split(path_restante)[0]
+        index_previo = self.fsModel.index(path_restante)
+        self.treeView.expand(index_previo)
+
         # self.treeView.setRootIndex(self.fsModel.index("C:\\Dropbox"))
         # self.treeView.expand(self.treeView.rootIndex())
         #self.fsModel.setRootPath(environ['HOMEPATH'])
@@ -136,7 +169,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         self.pdflatex_path = "C:/Program Files/MiKTeX 2.9/miktex/bin/x64/pdflatex.exe"
 
         self.carpetaChooser.clicked.connect(self.cualCarpeta)
-        self.agrega_cats.clicked.connect(self.agrega_categorias)
+        self.agrega_cats.clicked.connect(self.edita_categorias)
         #self.descarga_bt.clicked.connect(self.descarga_mesta)
         self.imprimir.clicked.connect(self.imprime)
 
@@ -188,30 +221,97 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         self.tableWidget_xml.cellDoubleClicked.connect(self.meDoblePicaronXML)
         self.tableWidget_resumen.cellDoubleClicked.connect(self.meDoblePicaronResumen)
 
-    def agrega_categorias(self):
+
+    def quitaCategoria(self):
+        curr_indexes = self.cats_dialog.myListWidget.selectedIndexes()
+        if len(curr_indexes)>1:
+            print("no")
+        else:
+            #confirmacion para maricas
+            self.lista_ordenada.pop(curr_indexes[0].row())
+            with open(self.json_path, "w") as jsonfile:
+                json.dump(self.lista_ordenada, jsonfile)
+            self.cats_dialog.myListWidget.takeItem(curr_indexes[0].row())
+
+    def editaCategoria(self):
+        curr_indexes = self.cats_dialog.myListWidget.selectedIndexes()
+        if len(curr_indexes)>1:
+            print("no")
+        else:
+
+            nombre, ok = QInputDialog().getText(self.cats_dialog, "Nombre de la Categoría",
+                                        "Nombre de la categoría:", QLineEdit.Normal,self.lista_ordenada[curr_indexes[0].row()][1])
+            claves_ps, ok = QInputDialog().getText(self.cats_dialog, "Lista de claves de producto o servicio",
+                                         "clave_ps:", QLineEdit.Normal,
+                                         self.lista_ordenada[curr_indexes[0].row()][0])
+
+            self.lista_ordenada[curr_indexes[0].row()][0] = claves_ps
+            self.lista_ordenada[curr_indexes[0].row()][1] = nombre
+
+
+    def agregaCategoria(self):
+        nombre, ok = QInputDialog().getText(self.cats_dialog, "Nombre de la Categoría",
+                                     "Nombre de la categoría:", QLineEdit.Normal,"")
+        claves_ps, ok = QInputDialog().getText(self.cats_dialog, "Lista de claves de producto o servicio",
+                                     "clave_ps:", QLineEdit.Normal,
+                                     "")
+        claves_ps.strip()
+        for clave in claves_ps.split(","):
+            self.lista_ordenada.append([clave, nombre])
+
+        self.lista_ordenada = sorted(self.lista_ordenada, key=lambda tup: tup[1])
+        with open(self.json_path, "w") as jsonfile:
+            json.dump(self.lista_ordenada, jsonfile)
+        self.cats_dialog.myListWidget.clear()
+        for tupla in self.lista_ordenada:
+            self.cats_dialog.myListWidget.addItem(tupla[1]+" ("+tupla[0]+")")
+
+
+    def edita_categorias(self):
+        self.cats_dialog = categorias_widget()
+        self.cats_dialog.remove_button.clicked.connect(self.quitaCategoria)
+        self.cats_dialog.add_button.clicked.connect(self.agregaCategoria)
+        self.cats_dialog.edit_button.clicked.connect(self.editaCategoria)
         folder_cliente = os.path.split(os.path.split(self.paths[0])[0])[0]
-        json_path = join(folder_cliente,"categorias_huiini.json")
-        if os.path.exists(json_path):
-            with open(json_path, "r") as jsonfile:
+        self.json_path = join(folder_cliente, "categorias_huiini.json")
+        if os.path.exists(self.json_path):
+            with open(self.json_path, "r") as jsonfile:
                 lista_de_tuplas = json.load(jsonfile)
         else:
             lista_de_tuplas = []
 
 
-
-        nombre, ok = QInputDialog().getText(self, "Nombre de la Categoría",
-                                     "Nombre de la categoría:", QLineEdit.Normal,
-                                     QDir().home().dirName())
-        claves_ps, ok = QInputDialog().getText(self, "Lista de claves de producto o servicio",
-                                     "clave_ps:", QLineEdit.Normal,
-                                     QDir().home().dirName())
-
-        claves_ps.strip()
-
-        for clave in claves_ps.split(","):
-            lista_de_tuplas.append([clave,nombre])
-        with open(json_path, "w") as jsonfile:
-            json.dump(lista_de_tuplas, jsonfile)
+        # lista_de_tuplas.extend(lista_categorias_default)
+        self.lista_ordenada = sorted(lista_de_tuplas, key=lambda tup: tup[1])
+        for tupla in self.lista_ordenada:
+            i = QListWidgetItem(tupla[1]+" ("+tupla[0]+")")
+            # if "Default" in tupla[0]:
+            #     i.setBackground(QtGui.QColor("#ababab"))
+            self.cats_dialog.myListWidget.addItem(i)
+        self.cats_dialog.exec()
+        # folder_cliente = os.path.split(os.path.split(self.paths[0])[0])[0]
+        # json_path = join(folder_cliente,"categorias_huiini.json")
+        # if os.path.exists(json_path):
+        #     with open(json_path, "r") as jsonfile:
+        #         lista_de_tuplas = json.load(jsonfile)
+        # else:
+        #     lista_de_tuplas = []
+        #
+        #
+        #
+        # nombre, ok = QInputDialog().getText(self, "Nombre de la Categoría",
+        #                              "Nombre de la categoría:", QLineEdit.Normal,
+        #                              QDir().home().dirName())
+        # claves_ps, ok = QInputDialog().getText(self, "Lista de claves de producto o servicio",
+        #                              "clave_ps:", QLineEdit.Normal,
+        #                              QDir().home().dirName())
+        #
+        # claves_ps.strip()
+        #
+        # for clave in claves_ps.split(","):
+        #     lista_de_tuplas.append([clave,nombre])
+        # with open(json_path, "w") as jsonfile:
+        #     json.dump(lista_de_tuplas, jsonfile)
 
 
 
@@ -583,6 +683,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         # for mes in meses:
         #     if mes in meses_folders:
         #         for concepto in self.conceptos[mes]:
+
+        dv_categorias = DataValidation(type="list", formula1='"{}"'.format(self.texto_para_validacion), allow_blank=True)
+        ws_todos.add_data_validation(dv_categorias)
         for concepto in self.conceptos:
             if not self.yaEstaba[concepto['mes']]:
                 row += 1
@@ -596,6 +699,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
                 ws_todos.cell(row, 8, concepto['importeConcepto'] - concepto['descuento'])
                 ws_todos.cell(row, 9, concepto['impuestos'])
                 ws_todos.cell(row, 10, (concepto['importeConcepto'] - concepto['descuento']) + concepto['impuestos'])
+                dv_categorias.add(ws_todos.cell(row, 11))
                 ws_todos.cell(row, 11, concepto['tipo'])
                 ws_todos.cell(row, 12, "=VLOOKUP(C"+str(row)+","+concepto['mes']+"!C:N,11,FALSE)")
 
@@ -1076,8 +1180,51 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
     def procesaCarpetas(self,paths):
         self.paths = paths.copy()
+        folder_cliente = os.path.split(os.path.split(self.paths[0])[0])[0]
+        self.json_path = join(folder_cliente, "categorias_huiini.json")
+        if os.path.exists(self.json_path):
+            with open(self.json_path, "r") as jsonfile:
+                lista_de_tuplas = json.load(jsonfile)
+        else:
+            lista_de_tuplas = []
+        self.lista_ordenada = sorted(lista_de_tuplas, key=lambda tup: tup[1])
+        self.lista_categorias_default = ["Combustible",
+                                    "Pasajes",
+                                    "Peajes",
+                                    "Consumo en Restaurante",
+                                    "Alimentos",
+                                    "Hospedaje",
+                                    "Teléfono",
+                                    "Internet",
+                                    "Equipo de Computo",
+                                    "Nómina",
+                                    "Institución Bancaria",
+                                    "Gastos Admin",
+                                    "Servcios Admin",
+                                    "Renta",
+                                    "Gasto Personal",
+                                    "Renta de Equipo",
+                                    "Envios",
+                                    "Soporte Técnico",
+                                    "Papeleria",
+                                    "Mant. Auto",
+                                    "Seguros",
+                                    "Mant. Oficina",
+                                    "Estacionamiento",
+                                    "Donativos",
+                                    "Gestion de Eventos",
+                                    "Politicas de Salud",
+                                    "Equipos Multimedia"]
 
+        # for tupla in self.lista_ordenada:
+        #     self.lista_categorias_default.append(tupla[1])
+
+        self.texto_para_validacion = ",".join(self.lista_categorias_default)
+        self.texto_para_validacion = ",".join(["oo","uu ú","aa aa"])
+        #self.texto_para_validacion = "oo,u uú"
+        print(self.texto_para_validacion)
         self.todos_los_meses = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"]
+
         self.conceptos = []
         self.yaEstaba = {}
         self.complementosDePago = {}
@@ -1087,7 +1234,13 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         same_year = True
         no_son_meses = False
 
+        huiini_home_folder = os.path.split(os.path.split(year_folder)[0])[0]
+        print(huiini_home_folder)
 
+        home = os.path.expanduser('~')
+        pdflatex_folder_path = os.path.join(home, 'Documents', 'huiini')
+        with open(os.path.join(pdflatex_folder_path,"huiini_home_folder_path.txt"), "w") as f:
+            f.write(huiini_home_folder)
         for path in paths:
             mes = os.path.split(path)[1]
             mes = ''.join([i for i in mes if not i.isdigit()])
