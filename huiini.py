@@ -229,8 +229,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         else:
             #confirmacion para maricas
             self.lista_ordenada.pop(curr_indexes[0].row())
-            with open(self.json_path, "w") as jsonfile:
+            with open(self.json_path, "w", encoding="utf-8") as jsonfile:
                 json.dump(self.lista_ordenada, jsonfile)
+
             self.cats_dialog.myListWidget.takeItem(curr_indexes[0].row())
 
     def editaCategoria(self):
@@ -260,7 +261,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
             self.lista_ordenada.append([clave, nombre])
 
         self.lista_ordenada = sorted(self.lista_ordenada, key=lambda tup: tup[1])
-        with open(self.json_path, "w") as jsonfile:
+        with open(self.json_path, "w", encoding="utf-8") as jsonfile:
             json.dump(self.lista_ordenada, jsonfile)
         self.cats_dialog.myListWidget.clear()
         for tupla in self.lista_ordenada:
@@ -275,7 +276,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         folder_cliente = os.path.split(os.path.split(self.paths[0])[0])[0]
         self.json_path = join(folder_cliente, "categorias_huiini.json")
         if os.path.exists(self.json_path):
-            with open(self.json_path, "r") as jsonfile:
+            with open(self.json_path, "r", encoding="utf-8") as jsonfile:
                 lista_de_tuplas = json.load(jsonfile)
         else:
             lista_de_tuplas = []
@@ -477,165 +478,166 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         ws_cats.cell(self.sumas_row,self.columna_totales,"=SUM("+letra_sumas+"2:"+letra_sumas+str(self.sumas_row-1)  +")")
 
     def hazTabDeIngresos(self,paths):
-        workbook = load_workbook(self.annual_xlsx_path)
-        if not "Ingresos" in workbook.sheetnames:
-            ws_ingresos = workbook.create_sheet("Ingresos")
+        if len(self.listaDeFacturasIngresos) > 0:
+            workbook = load_workbook(self.annual_xlsx_path)
+            if not "Ingresos" in workbook.sheetnames:
+                ws_ingresos = workbook.create_sheet("Ingresos")
 
-        ws_ingresos.cell(1, 1, "MesEmision")
-        ws_ingresos.cell(1, 2,     "MesPago")
-        ws_ingresos.cell(1, 3,     "uuid")
-        ws_ingresos.cell(1, 4,     "FECHA")
-        ws_ingresos.cell(1, 5,     "RFC (Receptor)")
-        ws_ingresos.cell(1, 6,     "RAZON SOCIAL")
-        ws_ingresos.cell(1, 7,     "DESCRIPCION")
-        ws_ingresos.cell(1, 8,     "SUBTOTAL")
-        ws_ingresos.cell(1, 9,     "I.V.A.")
-        ws_ingresos.cell(1, 10,     "IMPORTE")
-        ws_ingresos.cell(1, 11,     "RET ISR")
-        ws_ingresos.cell(1, 12,     "RET IVA")
-        ws_ingresos.cell(1, 13,     "T O T A L")
-        ws_ingresos.cell(1, 14,     "M-Pago")
-        ws_ingresos.cell(1, 15,     "Status")
-        ws_ingresos.cell(1, 16,     "complementosDePago")
-        ws_ingresos.cell(1, 17,     "Tipo")
+            ws_ingresos.cell(1, 1, "MesEmision")
+            ws_ingresos.cell(1, 2,     "MesPago")
+            ws_ingresos.cell(1, 3,     "uuid")
+            ws_ingresos.cell(1, 4,     "FECHA")
+            ws_ingresos.cell(1, 5,     "RFC (Receptor)")
+            ws_ingresos.cell(1, 6,     "RAZON SOCIAL")
+            ws_ingresos.cell(1, 7,     "DESCRIPCION")
+            ws_ingresos.cell(1, 8,     "SUBTOTAL")
+            ws_ingresos.cell(1, 9,     "I.V.A.")
+            ws_ingresos.cell(1, 10,     "IMPORTE")
+            ws_ingresos.cell(1, 11,     "RET ISR")
+            ws_ingresos.cell(1, 12,     "RET IVA")
+            ws_ingresos.cell(1, 13,     "T O T A L")
+            ws_ingresos.cell(1, 14,     "M-Pago")
+            ws_ingresos.cell(1, 15,     "Status")
+            ws_ingresos.cell(1, 16,     "complementosDePago")
+            ws_ingresos.cell(1, 17,     "Tipo")
 
 
-        row = 1
-        dv = DataValidation(type="list", formula1='"Pendiente,Pagado"', allowBlank=True)
-        ws_ingresos.add_data_validation(dv)
-        dv_mes = DataValidation(type="list", formula1='"ENERO,FEBRERO,MARZO,ABRIL,MAYO,JUNIO,JULIO,AGOSTO,SEPTIEMBRE,OCTUBRE,NOVIEMBRE,DICIEMBRE,--"', allow_blank=True)
-        ws_ingresos.add_data_validation(dv_mes)
+            row = 1
+            dv = DataValidation(type="list", formula1='"Pendiente,Pagado"', allowBlank=True)
+            ws_ingresos.add_data_validation(dv)
+            dv_mes = DataValidation(type="list", formula1='"ENERO,FEBRERO,MARZO,ABRIL,MAYO,JUNIO,JULIO,AGOSTO,SEPTIEMBRE,OCTUBRE,NOVIEMBRE,DICIEMBRE,--"', allow_blank=True)
+            ws_ingresos.add_data_validation(dv_mes)
 
-        for factura in self.listaDeFacturasIngresos:
+            for factura in self.listaDeFacturasIngresos:
 
-            row += 1
-            numeroDeMes = int(factura.fechaTimbrado.split("-")[1])
-            dv_mes.add(ws_ingresos.cell(row, 1))
-            dv_mes.add(ws_ingresos.cell(row, 2))
-            ws_ingresos.cell(row, 1, self.todos_los_meses[numeroDeMes-1])
-            if factura.metodoDePago == "PUE" or factura.tipoDeComprobante == "P":
-                ws_ingresos.cell(row, 2, self.todos_los_meses[numeroDeMes-1])
-            if factura.UUID in self.complementosDePago:
-                numeroDeMesP = int(self.complementosDePago[factura.UUID]["fechaUltimoPago"].split("-")[1])
-                ws_ingresos.cell(row, 2, self.todos_los_meses[numeroDeMesP-1])
-            ws_ingresos.cell(row, 3, factura.UUID)
-            ws_ingresos.cell(row, 4, factura.fechaTimbrado)
-            ws_ingresos.cell(row, 5, factura.ReceptorRFC)
-            ws_ingresos.cell(row, 6, factura.ReceptorNombre)
-            ws_ingresos.cell(row, 7, factura.conceptos[0]['descripcion'])
-            ws_ingresos.cell(row, 8, factura.subTotal)
-            ws_ingresos.cell(row, 9, factura.traslados["IVA"]["importe"])
-            ws_ingresos.cell(row, 10, factura.importe)
-            ws_ingresos.cell(row, 11, factura.retenciones["ISR"])
-            ws_ingresos.cell(row, 12, factura.retenciones["IVA"])
-            ws_ingresos.cell(row, 13, factura.total)
-            ws_ingresos.cell(row, 14, factura.metodoDePago)
-
-            status = "Pendiente"
-            if factura.metodoDePago == "PUE":
-                status = "Pagado"
-            if factura.metodoDePago == "PPD":
+                row += 1
+                numeroDeMes = int(factura.fechaTimbrado.split("-")[1])
+                dv_mes.add(ws_ingresos.cell(row, 1))
+                dv_mes.add(ws_ingresos.cell(row, 2))
+                ws_ingresos.cell(row, 1, self.todos_los_meses[numeroDeMes-1])
+                if factura.metodoDePago == "PUE" or factura.tipoDeComprobante == "P":
+                    ws_ingresos.cell(row, 2, self.todos_los_meses[numeroDeMes-1])
                 if factura.UUID in self.complementosDePago:
-                    if factura.total - self.complementosDePago[factura.UUID]["suma"] < 0.5:
-                        status = "Pagado"
-            if factura.tipoDeComprobante == "P":
-                status = "Pagado"
+                    numeroDeMesP = int(self.complementosDePago[factura.UUID]["fechaUltimoPago"].split("-")[1])
+                    ws_ingresos.cell(row, 2, self.todos_los_meses[numeroDeMesP-1])
+                ws_ingresos.cell(row, 3, factura.UUID)
+                ws_ingresos.cell(row, 4, factura.fechaTimbrado)
+                ws_ingresos.cell(row, 5, factura.ReceptorRFC)
+                ws_ingresos.cell(row, 6, factura.ReceptorNombre)
+                ws_ingresos.cell(row, 7, factura.conceptos[0]['descripcion'])
+                ws_ingresos.cell(row, 8, factura.subTotal)
+                ws_ingresos.cell(row, 9, factura.traslados["IVA"]["importe"])
+                ws_ingresos.cell(row, 10, factura.importe)
+                ws_ingresos.cell(row, 11, factura.retenciones["ISR"])
+                ws_ingresos.cell(row, 12, factura.retenciones["IVA"])
+                ws_ingresos.cell(row, 13, factura.total)
+                ws_ingresos.cell(row, 14, factura.metodoDePago)
 
-            dv.add(ws_ingresos.cell(row, 15))
-            ws_ingresos.cell(row, 15, status)
+                status = "Pendiente"
+                if factura.metodoDePago == "PUE":
+                    status = "Pagado"
+                if factura.metodoDePago == "PPD":
+                    if factura.UUID in self.complementosDePago:
+                        if factura.total - self.complementosDePago[factura.UUID]["suma"] < 0.5:
+                            status = "Pagado"
+                if factura.tipoDeComprobante == "P":
+                    status = "Pagado"
 
-            if factura.UUID in self.complementosDePago:
-                ws_ingresos.cell(row, 16, self.complementosDePago[factura.UUID]["suma"])
+                dv.add(ws_ingresos.cell(row, 15))
+                ws_ingresos.cell(row, 15, status)
 
-            if factura.tipoDeComprobante == "N":
-                ws_ingresos.cell(row, 17, "Nómina")
+                if factura.UUID in self.complementosDePago:
+                    ws_ingresos.cell(row, 16, self.complementosDePago[factura.UUID]["suma"])
 
-
-        ws_ingresos.cell(row+1, 8, "=SUM(H2:H"+str(row)+")")
-        ws_ingresos.cell(row+1, 9, "=SUM(I2:I"+str(row)+")")
-        ws_ingresos.cell(row+1, 10, "=SUM(J2:J"+str(row)+")")
-        ws_ingresos.cell(row+1, 11, "=SUM(K2:K"+str(row)+")")
-        ws_ingresos.cell(row+1, 12, "=SUM(L2:L"+str(row)+")")
-        ws_ingresos.cell(row+1, 13, "=SUM(M2:M"+str(row)+")")
-
-        ws_ingresos.cell(2, 23, "Facturado")#bajo protesta
-        ws_ingresos.cell(3, 20, "Mes")
-        ws_ingresos.cell(3, 21, "SUBTOTAL")
-        ws_ingresos.cell(3, 22, "I.V.A.")
-        ws_ingresos.cell(3, 23, "IMPORTE")
-        ws_ingresos.cell(3, 24, "RET ISR")
-        ws_ingresos.cell(3, 25, "RET IVA")
-        ws_ingresos.cell(3, 26, "T O T A L")
-
-        ws_ingresos.cell(4, 20, "ENERO")
-        ws_ingresos.cell(5, 20, "FEBRERO")
-        ws_ingresos.cell(6, 20, "MARZO")
-        ws_ingresos.cell(7, 20, "ABRIL")
-        ws_ingresos.cell(8, 20, "MAYO")
-        ws_ingresos.cell(9, 20, "JUNIO")
-        ws_ingresos.cell(10, 20, "JULIO")
-        ws_ingresos.cell(11, 20, "AGOSTO")
-        ws_ingresos.cell(12, 20, "SEPTIEMBRE")
-        ws_ingresos.cell(13, 20, "OCTUBRE")
-        ws_ingresos.cell(14, 20, "NOVIEMBRE")
-        ws_ingresos.cell(15, 20, "DICIEMBRE")
-
-        for renglonMes in range(4,16):
-            ws_ingresos.cell(renglonMes, 21, '=SUMIFS(H:H,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"<>Nómina")')
-            ws_ingresos.cell(renglonMes, 22, '=SUMIFS(I:I,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"<>Nómina")')
-            ws_ingresos.cell(renglonMes, 23, '=SUMIFS(J:J,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"<>Nómina")')
-            ws_ingresos.cell(renglonMes, 24, '=SUMIFS(K:K,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"<>Nómina")')
-            ws_ingresos.cell(renglonMes, 25, '=SUMIFS(L:L,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"<>Nómina")')
-            ws_ingresos.cell(renglonMes, 26, '=SUMIFS(M:M,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"<>Nómina")')
-
-        ws_ingresos.cell(16, 21, "=SUM(U4:U15)")
-        ws_ingresos.cell(16, 22, "=SUM(V4:V15)")
-        ws_ingresos.cell(16, 23, "=SUM(W4:W15)")
-        ws_ingresos.cell(16, 24, "=SUM(X4:X15)")
-        ws_ingresos.cell(16, 25, "=SUM(Y4:Y15)")
-        ws_ingresos.cell(16, 26, "=SUM(Z4:Z15)")
+                if factura.tipoDeComprobante == "N":
+                    ws_ingresos.cell(row, 17, "Nómina")
 
 
-        ws_ingresos.cell(19, 23, "Nómina")
-        ws_ingresos.cell(20, 20, "Mes")
-        ws_ingresos.cell(20, 21, "SUBTOTAL")
-        ws_ingresos.cell(20, 22, "I.V.A.")
-        ws_ingresos.cell(20, 23, "IMPORTE")
-        ws_ingresos.cell(20, 24, "RET ISR")
-        ws_ingresos.cell(20, 25, "RET IVA")
-        ws_ingresos.cell(20, 26, "T O T A L")
+            ws_ingresos.cell(row+1, 8, "=SUM(H2:H"+str(row)+")")
+            ws_ingresos.cell(row+1, 9, "=SUM(I2:I"+str(row)+")")
+            ws_ingresos.cell(row+1, 10, "=SUM(J2:J"+str(row)+")")
+            ws_ingresos.cell(row+1, 11, "=SUM(K2:K"+str(row)+")")
+            ws_ingresos.cell(row+1, 12, "=SUM(L2:L"+str(row)+")")
+            ws_ingresos.cell(row+1, 13, "=SUM(M2:M"+str(row)+")")
 
-        ws_ingresos.cell(21, 20, "ENERO")
-        ws_ingresos.cell(22, 20, "FEBRERO")
-        ws_ingresos.cell(23, 20, "MARZO")
-        ws_ingresos.cell(24, 20, "ABRIL")
-        ws_ingresos.cell(25, 20, "MAYO")
-        ws_ingresos.cell(26, 20, "JUNIO")
-        ws_ingresos.cell(27, 20, "JULIO")
-        ws_ingresos.cell(28, 20, "AGOSTO")
-        ws_ingresos.cell(29, 20, "SEPTIEMBRE")
-        ws_ingresos.cell(30, 20, "OCTUBRE")
-        ws_ingresos.cell(31, 20, "NOVIEMBRE")
-        ws_ingresos.cell(32, 20, "DICIEMBRE")
+            ws_ingresos.cell(2, 23, "Facturado")#bajo protesta
+            ws_ingresos.cell(3, 20, "Mes")
+            ws_ingresos.cell(3, 21, "SUBTOTAL")
+            ws_ingresos.cell(3, 22, "I.V.A.")
+            ws_ingresos.cell(3, 23, "IMPORTE")
+            ws_ingresos.cell(3, 24, "RET ISR")
+            ws_ingresos.cell(3, 25, "RET IVA")
+            ws_ingresos.cell(3, 26, "T O T A L")
 
-        for renglonMes in range(21,33):
-            ws_ingresos.cell(renglonMes, 21, '=SUMIFS(H:H,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"Nómina")')
-            ws_ingresos.cell(renglonMes, 22, '=SUMIFS(I:I,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"Nómina")')
-            ws_ingresos.cell(renglonMes, 23, '=SUMIFS(J:J,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"Nómina")')
-            ws_ingresos.cell(renglonMes, 24, '=SUMIFS(K:K,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"Nómina")')
-            ws_ingresos.cell(renglonMes, 25, '=SUMIFS(L:L,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"Nómina")')
-            ws_ingresos.cell(renglonMes, 26, '=SUMIFS(M:M,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"Nómina")')
+            ws_ingresos.cell(4, 20, "ENERO")
+            ws_ingresos.cell(5, 20, "FEBRERO")
+            ws_ingresos.cell(6, 20, "MARZO")
+            ws_ingresos.cell(7, 20, "ABRIL")
+            ws_ingresos.cell(8, 20, "MAYO")
+            ws_ingresos.cell(9, 20, "JUNIO")
+            ws_ingresos.cell(10, 20, "JULIO")
+            ws_ingresos.cell(11, 20, "AGOSTO")
+            ws_ingresos.cell(12, 20, "SEPTIEMBRE")
+            ws_ingresos.cell(13, 20, "OCTUBRE")
+            ws_ingresos.cell(14, 20, "NOVIEMBRE")
+            ws_ingresos.cell(15, 20, "DICIEMBRE")
 
-        ws_ingresos.cell(33, 21, "=SUM(U21:U32)")
-        ws_ingresos.cell(33, 22, "=SUM(V21:V32)")
-        ws_ingresos.cell(33, 23, "=SUM(W21:W32)")
-        ws_ingresos.cell(33, 24, "=SUM(X21:X32)")
-        ws_ingresos.cell(33, 25, "=SUM(Y21:Y32)")
-        ws_ingresos.cell(33, 26, "=SUM(Z21:Z32)")
+            for renglonMes in range(4,16):
+                ws_ingresos.cell(renglonMes, 21, '=SUMIFS(H:H,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"<>Nómina")')
+                ws_ingresos.cell(renglonMes, 22, '=SUMIFS(I:I,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"<>Nómina")')
+                ws_ingresos.cell(renglonMes, 23, '=SUMIFS(J:J,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"<>Nómina")')
+                ws_ingresos.cell(renglonMes, 24, '=SUMIFS(K:K,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"<>Nómina")')
+                ws_ingresos.cell(renglonMes, 25, '=SUMIFS(L:L,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"<>Nómina")')
+                ws_ingresos.cell(renglonMes, 26, '=SUMIFS(M:M,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"<>Nómina")')
 
-        self.style_ws_ingresos(ws_ingresos,17,row+1)
+            ws_ingresos.cell(16, 21, "=SUM(U4:U15)")
+            ws_ingresos.cell(16, 22, "=SUM(V4:V15)")
+            ws_ingresos.cell(16, 23, "=SUM(W4:W15)")
+            ws_ingresos.cell(16, 24, "=SUM(X4:X15)")
+            ws_ingresos.cell(16, 25, "=SUM(Y4:Y15)")
+            ws_ingresos.cell(16, 26, "=SUM(Z4:Z15)")
 
-        workbook.save(self.annual_xlsx_path)
+
+            ws_ingresos.cell(19, 23, "Nómina")
+            ws_ingresos.cell(20, 20, "Mes")
+            ws_ingresos.cell(20, 21, "SUBTOTAL")
+            ws_ingresos.cell(20, 22, "I.V.A.")
+            ws_ingresos.cell(20, 23, "IMPORTE")
+            ws_ingresos.cell(20, 24, "RET ISR")
+            ws_ingresos.cell(20, 25, "RET IVA")
+            ws_ingresos.cell(20, 26, "T O T A L")
+
+            ws_ingresos.cell(21, 20, "ENERO")
+            ws_ingresos.cell(22, 20, "FEBRERO")
+            ws_ingresos.cell(23, 20, "MARZO")
+            ws_ingresos.cell(24, 20, "ABRIL")
+            ws_ingresos.cell(25, 20, "MAYO")
+            ws_ingresos.cell(26, 20, "JUNIO")
+            ws_ingresos.cell(27, 20, "JULIO")
+            ws_ingresos.cell(28, 20, "AGOSTO")
+            ws_ingresos.cell(29, 20, "SEPTIEMBRE")
+            ws_ingresos.cell(30, 20, "OCTUBRE")
+            ws_ingresos.cell(31, 20, "NOVIEMBRE")
+            ws_ingresos.cell(32, 20, "DICIEMBRE")
+
+            for renglonMes in range(21,33):
+                ws_ingresos.cell(renglonMes, 21, '=SUMIFS(H:H,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"Nómina")')
+                ws_ingresos.cell(renglonMes, 22, '=SUMIFS(I:I,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"Nómina")')
+                ws_ingresos.cell(renglonMes, 23, '=SUMIFS(J:J,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"Nómina")')
+                ws_ingresos.cell(renglonMes, 24, '=SUMIFS(K:K,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"Nómina")')
+                ws_ingresos.cell(renglonMes, 25, '=SUMIFS(L:L,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"Nómina")')
+                ws_ingresos.cell(renglonMes, 26, '=SUMIFS(M:M,B:B,T'+str(renglonMes)+',O:O,"Pagado",Q:Q,"Nómina")')
+
+            ws_ingresos.cell(33, 21, "=SUM(U21:U32)")
+            ws_ingresos.cell(33, 22, "=SUM(V21:V32)")
+            ws_ingresos.cell(33, 23, "=SUM(W21:W32)")
+            ws_ingresos.cell(33, 24, "=SUM(X21:X32)")
+            ws_ingresos.cell(33, 25, "=SUM(Y21:Y32)")
+            ws_ingresos.cell(33, 26, "=SUM(Z21:Z32)")
+
+            self.style_ws_ingresos(ws_ingresos,17,row+1)
+
+            workbook.save(self.annual_xlsx_path)
 
     def hazAgregados(self,paths):
         print(self.complementosDePago)
@@ -655,6 +657,11 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
         ws_cats = workbook.create_sheet("IVA_anual")
         ws_cats_importe = workbook.create_sheet("Importe_anual")
+        ws_lista_cats = workbook.create_sheet("Categorias")
+        r = 0
+        for cat in self.lista_categorias_default:
+            r += 1
+            ws_lista_cats.cell(r, 1, cat)
 
         for mes in self.meses:
             ws_mes = workbook[mes]
@@ -684,7 +691,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         #     if mes in meses_folders:
         #         for concepto in self.conceptos[mes]:
 
-        dv_categorias = DataValidation(type="list", formula1='"{}"'.format(self.texto_para_validacion), allow_blank=True)
+        #dv_categorias = DataValidation(type="list", formula1='"{}"'.format(self.texto_para_validacion), allow_blank=True)
+        dv_categorias = DataValidation(type="list", formula1="=Categorias!A1:A"+str(len(self.lista_categorias_default)), allow_blank=True)
+
         ws_todos.add_data_validation(dv_categorias)
         for concepto in self.conceptos:
             if not self.yaEstaba[concepto['mes']]:
@@ -1183,45 +1192,50 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         folder_cliente = os.path.split(os.path.split(self.paths[0])[0])[0]
         self.json_path = join(folder_cliente, "categorias_huiini.json")
         if os.path.exists(self.json_path):
-            with open(self.json_path, "r") as jsonfile:
+            with open(self.json_path, "r", encoding="utf-8") as jsonfile:
                 lista_de_tuplas = json.load(jsonfile)
         else:
             lista_de_tuplas = []
         self.lista_ordenada = sorted(lista_de_tuplas, key=lambda tup: tup[1])
-        self.lista_categorias_default = ["Combustible",
-                                    "Pasajes",
-                                    "Peajes",
-                                    "Consumo en Restaurante",
-                                    "Alimentos",
-                                    "Hospedaje",
-                                    "Teléfono",
-                                    "Internet",
-                                    "Equipo de Computo",
-                                    "Nómina",
-                                    "Institución Bancaria",
-                                    "Gastos Admin",
-                                    "Servcios Admin",
-                                    "Renta",
-                                    "Gasto Personal",
-                                    "Renta de Equipo",
-                                    "Envios",
-                                    "Soporte Técnico",
-                                    "Papeleria",
-                                    "Mant. Auto",
-                                    "Seguros",
-                                    "Mant. Oficina",
-                                    "Estacionamiento",
-                                    "Donativos",
-                                    "Gestion de Eventos",
-                                    "Politicas de Salud",
-                                    "Equipos Multimedia"]
+        self.lista_categorias_default = []
+        # self.lista_categorias_default = ["Combustible",
+        #                             "Pasajes",
+        #                             "Peajes",
+        #                             "Consumo en Restaurante",
+        #                             "Alimentos",
+        #                             "Hospedaje",
+        #                             "Teléfono",
+        #                             "Internet",
+        #                             "Equipo de Computo",
+        #                             "Nómina",
+        #                             "Institución Bancaria",
+        #                             "Gastos Admin",
+        #                             "Servcios Admin",
+        #                             "Renta",
+        #                             "Gasto Personal",
+        #                             "Renta de Equipo",
+        #                             "Envios",
+        #                             "Soporte Técnico",
+        #                             "Papeleria",
+        #                             "Mant. Auto",
+        #                             "Seguros",
+        #                             "Mant. Oficina",
+        #                             "Estacionamiento",
+        #                             "Donativos",
+        #                             "Gestion de Eventos",
+        #                             "Politicas de Salud",
+        #                             "Equipos Multimedia"]
 
-        # for tupla in self.lista_ordenada:
-        #     self.lista_categorias_default.append(tupla[1])
+        with open(join(scriptDirectory,"categorias_default.json"), "r", encoding="utf-8") as jf:
+            self.lista_categorias_default = json.load(jf)
+        for tupla in self.lista_ordenada:
+            self.lista_categorias_default.append(tupla[1])
 
-        self.texto_para_validacion = ",".join(self.lista_categorias_default)
-        self.texto_para_validacion = ",".join(["oo","uu ú","aa aa"])
-        #self.texto_para_validacion = "oo,u uú"
+
+
+        #self.texto_para_validacion = ",".join(self.lista_categorias_default)
+        #self.texto_para_validacion = ",".join(["oo","uu ú","aa aa"])
+        self.texto_para_validacion = "oo,u uú"
         print(self.texto_para_validacion)
         self.todos_los_meses = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"]
 

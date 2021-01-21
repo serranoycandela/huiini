@@ -1,3 +1,4 @@
-flask
+
 jinja2
-# texcaller
+openpyxl
+python3-ghostscript
