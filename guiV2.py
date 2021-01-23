@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'mainwindowV2.ui',
 # licensing of 'mainwindowV2.ui' applies.
 #
-# Created: Thu Dec 17 21:53:30 2020
+# Created: Sat Jan 23 13:19:21 2021
 #      by: pyside2-uic  running on PySide2 5.13.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -66,6 +66,10 @@ class Ui_MainWindow(object):
         self.botonCancela = QtWidgets.QPushButton(self.centralWidget)
         self.botonCancela.setGeometry(QtCore.QRect(700, 580, 111, 31))
         self.botonCancela.setObjectName("botonCancela")
+        self.progressBar = QtWidgets.QProgressBar(self.centralWidget)
+        self.progressBar.setGeometry(QtCore.QRect(250, 590, 421, 16))
+        self.progressBar.setProperty("value", 24)
+        self.progressBar.setObjectName("progressBar")
         MainWindow.setCentralWidget(self.centralWidget)
         self.menuBar = QtWidgets.QMenuBar(MainWindow)
         self.menuBar.setGeometry(QtCore.QRect(0, 0, 1342, 21))
@@ -87,6 +91,6 @@ class Ui_MainWindow(object):
         self.impresora.setText(QtWidgets.QApplication.translate("MainWindow", "Selecciona Impresora", None, -1))
         self.imprimir.setText(QtWidgets.QApplication.translate("MainWindow", "Imprimir", None, -1))
         self.tableWidget_xml.setSortingEnabled(True)
-        self.agrega_cats.setText(QtWidgets.QApplication.translate("MainWindow", "Agrega categorías", None, -1))
+        self.agrega_cats.setText(QtWidgets.QApplication.translate("MainWindow", "Editar categorías", None, -1))
         self.botonCancela.setText(QtWidgets.QApplication.translate("MainWindow", "Cancelar impresión", None, -1))
 

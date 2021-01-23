@@ -220,6 +220,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
         self.tableWidget_xml.cellDoubleClicked.connect(self.meDoblePicaronXML)
         self.tableWidget_resumen.cellDoubleClicked.connect(self.meDoblePicaronResumen)
+        self.progressBar.hide()
 
 
     def quitaCategoria(self):
@@ -248,6 +249,12 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
             self.lista_ordenada[curr_indexes[0].row()][0] = claves_ps
             self.lista_ordenada[curr_indexes[0].row()][1] = nombre
+            self.lista_ordenada = sorted(self.lista_ordenada, key=lambda tup: tup[1])
+            with open(self.json_path, "w", encoding="utf-8") as jsonfile:
+                json.dump(self.lista_ordenada, jsonfile)
+            self.cats_dialog.myListWidget.clear()
+            for tupla in self.lista_ordenada:
+                self.cats_dialog.myListWidget.addItem(tupla[1]+" ("+tupla[0]+")")
 
 
     def agregaCategoria(self):
@@ -257,8 +264,19 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
                                      "clave_ps:", QLineEdit.Normal,
                                      "")
         claves_ps.strip()
+
+
         for clave in claves_ps.split(","):
-            self.lista_ordenada.append([clave, nombre])
+            pasa = True
+            for tupla in self.lista_ordenada:
+                if tupla[0].startswith(clave) or clave.startswith(tupla[0]):
+                    pasa = False
+                    QMessageBox.information(self, "Advertencia", "La inicio de clave " + clave + " ya está considerado en la categoría " + tupla[1])
+            if pasa:
+                if clave == "" or nombre == "":
+                    print("no mames")
+                else:
+                    self.lista_ordenada.append([clave, nombre])
 
         self.lista_ordenada = sorted(self.lista_ordenada, key=lambda tup: tup[1])
         with open(self.json_path, "w", encoding="utf-8") as jsonfile:
@@ -1022,25 +1040,25 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 #             QtGui.QMessageBox.information(self, "Conceptos", mesage)
         if column == 2:
 
-
-            xml =join(self.esteFolder + os.sep,self.tableWidget_xml.item(row, 2).text()+".xml")
+            egresos_folder = self.esteFolder.replace("INGRESOS", "EGRESOS")
+            xml =join(egresos_folder + os.sep,self.tableWidget_xml.item(row, 2).text()+".xml")
             #acrobatPath = r'C:/Program Files (x86)/Adobe/Acrobat Reader DC/Reader/AcroRd32.exe'
             #subprocess.Popen("%s %s" % (acrobatPath, pdf))
             try:
-                os.startfile(xml)
                 print("este guey me pico:"+xml)
+                os.startfile(xml)
             except:
                 print ("el sistema no tiene una aplicacion por default para abrir xmls")
                 QMessageBox.information(self, "Information", "El sistema no tiene una aplicación por default para abrir xmls" )
 
         if column == 0:
-
-            pdf = join(join(self.esteFolder,"huiini"),self.tableWidget_xml.item(row, 2).text()+".pdf")
+            egresos_folder = self.esteFolder.replace("INGRESOS", "EGRESOS")
+            pdf = join(join(egresos_folder,"huiini"),self.tableWidget_xml.item(row, 2).text()+".pdf")
             #acrobatPath = r'C:/Program Files (x86)/Adobe/Acrobat Reader DC/Reader/AcroRd32.exe'
             #subprocess.Popen("%s %s" % (acrobatPath, pdf))
             try:
-                os.startfile(pdf)
                 print("este guey me pico:"+pdf)
+                os.startfile(pdf)
             except:
                 print ("el sistema no tiene una aplicacion por default para abrir pdfs")
                 QMessageBox.information(self, "Information", "El sistema no tiene una aplicación por default para abrir pdfs" )
@@ -1154,32 +1172,28 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
                 # except:
                 #     self.tableWidget_xml.setCellWidget(contador,0, ImgWidgetTache(self))
     def borraAuxiliares(self):
-        self.pd.show()
-        self.pd.setLabelText("Borrando Auxiliares...")
         contador = 0
         for t in range(0,10):
             time_old.sleep((1.0*len(self.listaDeFacturasOrdenadas)/10.0))
-            self.pd.setValue((100.0 * contador) /(len(self.listaDeFacturasOrdenadas)*5.0))
+
         contador = 0
         for archivo in os.listdir(self.esteFolder):
             if ".tex" in archivo:
                 contador += 1
-                self.pd.setValue((100.0 * contador) /(len(self.listaDeFacturasOrdenadas)*5.0))
                 eltex = join(self.esteFolder + os.sep,archivo)
                 os.remove(eltex)
         for archivo in os.listdir(join(self.esteFolder,"huiini")):
             if ".log" in archivo:
                 contador += 1
-                self.pd.setValue((100.0 * contador) /(len(self.listaDeFacturasOrdenadas)*5.0))
                 ellog = join(join(self.esteFolder,"huiini"),archivo)
                 os.remove(ellog)
         for archivo in os.listdir(join(self.esteFolder,"huiini")):
             if ".aux" in archivo:
                 contador += 1
-                self.pd.setValue((100.0 * contador) /(len(self.listaDeFacturasOrdenadas)*5.0))
                 elaux = join(join(self.esteFolder,"huiini"),archivo)
                 os.remove(elaux)
-        self.pd.hide()
+
+        self.progressBar.hide()
 
     def cualCarpeta(self):
         self.folder.hide()
@@ -1189,6 +1203,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
     def procesaCarpetas(self,paths):
         self.paths = paths.copy()
+        self.progressBar.show()
+        self.progressBar.setValue(1)
         folder_cliente = os.path.split(os.path.split(self.paths[0])[0])[0]
         self.json_path = join(folder_cliente, "categorias_huiini.json")
         if os.path.exists(self.json_path):
@@ -1229,7 +1245,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         with open(join(scriptDirectory,"categorias_default.json"), "r", encoding="utf-8") as jf:
             self.lista_categorias_default = json.load(jf)
         for tupla in self.lista_ordenada:
-            self.lista_categorias_default.append(tupla[1])
+            if not tupla[1] in self.lista_categorias_default:
+                self.lista_categorias_default.append(tupla[1])
 
 
 
@@ -1293,7 +1310,12 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
                 self.excel_path = join(self.paths[0],"EGRESOS","huiini","resumen.xlsx")
 
             self.listaDeFacturasIngresos = []
+
+            p = 0
             for path in paths:
+                p += 1
+                progreso = int(100*(p/(len(paths)+2)))
+                self.progressBar.setValue(progreso)
                 self.procesaEgresos(path)
                 self.pon_categorias_custom_por_factura(paths)
                 self.agregaMes(self.mes)
@@ -1301,12 +1323,18 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
 
             self.hazTabDeIngresos(paths)
-
+            p += 1
+            progreso = int(100*(p/(len(paths)+2)))
+            self.progressBar.setValue(progreso)
             self.pon_categorias_custom_por_concepto(paths)
             self.hazAgregados(paths)
+            p += 1
+            progreso = int(100*(p/(len(paths)+2)))
+            self.progressBar.setValue(progreso)
             self.agrega_cats.setEnabled(True)
             self.raise_()
             self.activateWindow()
+            self.progressBar.hide()
 
     def pon_categorias_custom_por_factura(self,paths):
 
@@ -1410,6 +1438,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
                 self.borraAuxiliares()
 
     def procesaEgresos(self, path):
+        self.folder.setText("Procesando: " + u'\n' + path)
+        self.folder.show()
         self.esteFolder = join(path,"EGRESOS")
 
         self.mes = os.path.split(path)[1]
@@ -1456,10 +1486,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         print(self.listaDeFacturasOrdenadas)
 
 
-        self.pd =  QProgressDialog("Operation in progress.", "Cancel", 0, 100, self)
-        self.pd.setWindowTitle("Huiini")
-        self.pd.setValue(0)
-        self.pd.show()
 
         if cuantosDuplicados > 0:
             mensaje = "En egresos hay "+str(cuantosDuplicados)+" duplicados\n"
@@ -1472,7 +1498,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
         contador = 0
         for factura in self.listaDeFacturasOrdenadas:
-            self.pd.setValue(50*((contador + 1)/len(self.listaDeFacturasOrdenadas)))
             factura.setFolio(contador + 1)
             los_conceptos = factura.conceptos.copy()
             for concepto in los_conceptos:
@@ -1495,7 +1520,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
             if factura.tipoDeComprobante == "N":
                 self.listaDeFacturasIngresos.append(factura)
-            self.pd.setLabelText("Procesando: " + factura.UUID[:17] + "...")
+
 
             #url = "http://huiini.pythonanywhere.com/upload"
             #url =  "%s/upload/%s/" % (url_server, self.hash_carpeta)
@@ -1527,6 +1552,12 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
             self.tableWidget_xml.setItem(contador,13,self.esteItem(factura.formaDePagoStr,""))
             self.tableWidget_xml.setItem(contador,14, self.esteItem(factura.metodoDePago,factura.metodoDePago))
 
+            pdf_dir = os.path.join(os.path.dirname(factura.tex_path),"huiini")
+            pdf_name = os.path.split(factura.tex_path)[1].replace("tex","pdf")
+            pdf_path = os.path.join(pdf_dir,pdf_name)
+            if os.path.exists(pdf_path):
+                self.tableWidget_xml.setCellWidget(contador,0, ImgWidgetPalomita(self))
+
             if factura.EmisorRFC in self.diccionarioPorRFCs:
                 self.diccionarioPorRFCs[factura.EmisorRFC]['subTotal'] += float(factura.subTotal)
                 self.diccionarioPorRFCs[factura.EmisorRFC]['descuento'] += float(factura.descuento)
@@ -1547,8 +1578,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
 
 
-        self.pd.show()
-        self.pd.setLabelText("Creando Resumen...")
+
         # for t in range(0,5):
         #     time_old.sleep(0.05*len(self.listaDeFacturasOrdenadas))
         #     self.pd.setValue(self.pd.value() + ( (100 - self.pd.value()) / 2))
@@ -1571,12 +1601,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
 
         self.sumale()
-        self.pd.setLabelText("Carpeta procesada")
-        self.pd.setValue(self.pd.value() + ( (100 - self.pd.value()) / 2))
+
         self.hazResumenDiot(self.esteFolder)
         #if len(paths)>2:
 
-        self.pd.setValue(100)
         self.tableWidget_resumen.setItem(0,1,QTableWidgetItem("Resumen Diot"))
         self.tableWidget_resumen.setItem(0,2,QTableWidgetItem("Sumatoria del Periodo"))
         self.tableWidget_resumen.setCellWidget(0,0, ImgWidgetPalomita(self))
@@ -1596,6 +1624,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         self.folder.show()
 
 app = QtWidgets.QApplication(sys.argv)
+app.setStyleSheet("QMessageBox { messagebox-text-interaction-flags: 5; }")
 form = Ui_MainWindow()
 form.show()
 

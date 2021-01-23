@@ -169,7 +169,7 @@ class FacturaLocal(object):
             self.sumale()
             self.setForma()
 
-        
+
 
 
     def setForma(self):
@@ -591,6 +591,7 @@ class FacturaLocal(object):
             self.trasladosLocales = {"IVA":{"importe":0,"tasa":0},"ISR":{"importe":0,"tasa":0},"IEPS":{"importe":0,"tasa":0},"ISH":{"importe":0,"tasa":0},"TUA":{"importe":0,"tasa":0}}
             TimbreFiscalDigitalTag = self.ComplementoTag.find("{http://www.sat.gob.mx/TimbreFiscalDigital}TimbreFiscalDigital")
             self.UUID = TimbreFiscalDigitalTag.get ("UUID")
+            self.tex_path = os.path.dirname(self.xml_path)+ "/"+self.UUID+".tex"
             self.selloCFD = TimbreFiscalDigitalTag.get (self.selloCFDKey)[:50] + "..."
             #self.selloCFD = TimbreFiscalDigitalTag.get (self.selloCFDKey)
             self.selloSAT = TimbreFiscalDigitalTag.get (self.selloSATKey)[:50] + "..."
@@ -674,7 +675,7 @@ class FacturaLocal(object):
                 loader=jinja2.FileSystemLoader(path or './')
             ).get_template(filename)
 
-        self.tex_path = os.path.dirname(self.xml_path)+ "/"+self.UUID+".tex"
+
 
         logo_path = os.path.join(self.scriptDirectory,"logo_b.png")
 
