@@ -221,7 +221,14 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         self.tableWidget_xml.cellDoubleClicked.connect(self.meDoblePicaronXML)
         self.tableWidget_resumen.cellDoubleClicked.connect(self.meDoblePicaronResumen)
         self.progressBar.hide()
+        self.tableWidget_xml.horizontalHeader().sectionClicked.connect(self.reordena)
 
+
+    def reordena(self, column):
+        print("reodenaria")
+        if column == 2:
+            print("reodenaria con uuid")
+            self.listaDeFacturasOrdenadas = sorted(self.listaDeFacturasOrdenadas, key=lambda listaDeFacturasOrdenadas: listaDeFacturasOrdenadas.UUID)
 
     def quitaCategoria(self):
         curr_indexes = self.cats_dialog.myListWidget.selectedIndexes()
@@ -846,11 +853,13 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
                     new_cell = ws_rfc.cell(row, c)
                     new_cell._style = copy(cell._style)
             ws_rfc.cell(row, 3, key)
-            ws_rfc.cell(row, 8, value['importe'])
+            ws_rfc.cell(row, 8, value['importeStr'])
             # ws_rfc.cell(row, 2, value['subTotal'])
             # ws_rfc.cell(row, 3, value['descuento'])
-            # ws_rfc.cell(row, 4, value['trasladoIVA'])
-            ws_rfc.cell(row, 20, value['trasladoIVA'])
+            # ws_rfc.cell(row, 4, value['trasladoIVA'])factura.EmisorNombre
+            ws_rfc.cell(row, 5, value['nombre'])
+            ##factura.EmisorNombre
+            ws_rfc.cell(row, 20, value['trasladoIVAStr'])
             # ws_rfc.cell(row, 6, value['total'])
         ws_rfc.cell(row+2, 8, "=SUM(H6:H"+str(row)+")")
         ws_rfc.cell(row+2, 20, "=SUM(T6:T"+str(row)+")")
@@ -980,9 +989,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
         for columna in range(6,13):
             suma = 0
             for renglon in range(self.numeroDeFacturasValidas):
-
-                suma += float(self.tableWidget_xml.item(renglon, columna).text())
-
+                try:
+                    suma += float(self.tableWidget_xml.item(renglon, columna).text())
+                except:
+                    print("no puedo")
 
             self.tableWidget_resumen.setItem(renglonResumen,columna-3,QTableWidgetItem(str(suma)))
 
@@ -1111,39 +1121,45 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
 
     def imprime(self):
         #objetosMagicosOrdenados = sorted(self.objetosMagicos, key=lambda objetosMagicos: objetosMagicos.fecha)
+        for renglon in range(0,self.tableWidget_xml.rowCount()-1):
+            uuid = self.tableWidget_xml.item(renglon,2).text()
+            if float(self.tableWidget_xml.item(renglon,12).text()) < 0.000001:
+                print("no imprimo facturas con total menores a 0")
+            else:
+                if self.tableWidget_xml.item(renglon,14).text() == "None":
+                    print("no imprimo pagos seño")
+                else:
+                    printing_folder = self.esteFolder.replace("INGRESOS","EGRESOS")
+                    pdf_path = join(join(printing_folder,"huiini"), uuid+".pdf")
+                    args = [
+                            "-dPrinted", "-dBATCH", "-dNOSAFER", "-dNOPAUSE", "-dNOPROMPT"
+                            "-q",
+                            "-dNumCopies#1",
+                            "-sDEVICE#mswinpr2",
+                            f'-sOutputFile#"%printer%{win32print.GetDefaultPrinter()}"',
+                            f'"{pdf_path}"'
+                        ]
+
+                    encoding = locale.getpreferredencoding()
+                    args = [a.encode(encoding) for a in args]
+                    ghostscript.Ghostscript(*args)
 
         for factura in self.listaDeFacturasOrdenadas:
-            # try:
-                if factura.total > 0:
-                    print(factura.fechaTimbrado)
-                    if not factura.tipoDeComprobante == "P":
-                        pdf_path = join(join(self.esteFolder,"huiini"), factura.UUID+".pdf")
-                        args = [
-                                "-dPrinted", "-dBATCH", "-dNOSAFER", "-dNOPAUSE", "-dNOPROMPT"
-                                "-q",
-                                "-dNumCopies#1",
-                                "-sDEVICE#mswinpr2",
-                                f'-sOutputFile#"%printer%{win32print.GetDefaultPrinter()}"',
-                                f'"{pdf_path}"'
-                            ]
 
-                        encoding = locale.getpreferredencoding()
-                        args = [a.encode(encoding) for a in args]
-                        ghostscript.Ghostscript(*args)
-                        #time_old.sleep(10)
-                        # hh = win32api.ShellExecute(0, "print", join(join(self.esteFolder,"huiini"), factura.UUID+".pdf"),None, ".",  0)
-                        # if hh > 40:
-                        #     print("algo")
-                        #     time_old.sleep(10)
-                    else:
-                        print("pagos no se imprimen")
+            pdf_path = join(join(self.esteFolder,"huiini"), factura.UUID+".pdf")
+            args = [
+                    "-dPrinted", "-dBATCH", "-dNOSAFER", "-dNOPAUSE", "-dNOPROMPT"
+                    "-q",
+                    "-dNumCopies#1",
+                    "-sDEVICE#mswinpr2",
+                    f'-sOutputFile#"%printer%{win32print.GetDefaultPrinter()}"',
+                    f'"{pdf_path}"'
+                ]
 
-                elif factura.total < 0:
-                    print("negativo?????")
-                else:#si es cero
-                    print("nada")
-            # except:
-            #     print("hay un pdf faltante o corrupto")
+            encoding = locale.getpreferredencoding()
+            args = [a.encode(encoding) for a in args]
+            ghostscript.Ghostscript(*args)
+
 
 
         #hh = win32api.ShellExecute(0, "print", join(join(self.esteFolder,"huiini"), "resumenDiot.pdf") , None,  ".",  0)
@@ -1315,11 +1331,12 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
             for path in paths:
                 p += 1
                 progreso = int(100*(p/(len(paths)+2)))
-                self.progressBar.setValue(progreso)
                 self.procesaEgresos(path)
                 self.pon_categorias_custom_por_factura(paths)
                 self.agregaMes(self.mes)
                 self.procesaIngresos(path)
+                self.aislaNomina(path)
+                self.progressBar.setValue(progreso)
 
 
             self.hazTabDeIngresos(paths)
@@ -1437,6 +1454,22 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
                 time_old.sleep(0.2*len(self.listaDeFacturasOrdenadas))
                 self.borraAuxiliares()
 
+    def aislaNomina(self, path):
+        esteFolder = join(path,"EGRESOS")
+
+        for archivo in os.listdir(esteFolder):
+            if archivo.endswith(".xml"):
+                laFactura = Factura(join(esteFolder + os.sep,archivo))
+                if laFactura.tipoDeComprobante == "N":
+                    if not os.path.exists(join(esteFolder, "Nomina")):
+                        os.makedirs(join(esteFolder, "Nomina"))
+                    try:
+                        os.rename(join(esteFolder + os.sep,archivo), join(esteFolder, "Nomina",archivo))
+
+                    except:
+                        print("no pude mover una nómina")
+
+
     def procesaEgresos(self, path):
         self.folder.setText("Procesando: " + u'\n' + path)
         self.folder.show()
@@ -1477,7 +1510,23 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
                             self.listaDeUUIDs.append(laFactura.UUID)
                             contador += 1
                             self.listaDeFacturas.append(laFactura)
+        if os.path.exists(join(self.esteFolder, "Nomina")):
+            for archivo in os.listdir(join(self.esteFolder, "Nomina")):
+                if archivo.endswith(".xml"):
 
+                    laFactura = Factura(join(join(self.esteFolder, "Nomina") + os.sep,archivo))
+                    if laFactura.sello == "SinSello":
+                        print("Omitiendo xml sin sello "+laFactura.xml_path)
+                    else:
+                        if laFactura.version:
+                            if laFactura.UUID in self.listaDeUUIDs:
+
+                                cuantosDuplicados+=1
+                                self.listaDeDuplicados.append(laFactura.UUID)
+                            else:
+                                self.listaDeUUIDs.append(laFactura.UUID)
+                                contador += 1
+                                self.listaDeFacturas.append(laFactura)
         if contador > 13:
             self.tableWidget_xml.setRowCount(contador)
 
@@ -1564,13 +1613,18 @@ class Ui_MainWindow(QtWidgets.QMainWindow, guiV2.Ui_MainWindow):
                 self.diccionarioPorRFCs[factura.EmisorRFC]['trasladoIVA'] += float(factura.traslados['IVA']['importe'])
                 self.diccionarioPorRFCs[factura.EmisorRFC]['importe'] += float(factura.subTotal)-float(factura.descuento)
                 self.diccionarioPorRFCs[factura.EmisorRFC]['total'] += float(factura.total)
+                self.diccionarioPorRFCs[factura.EmisorRFC]['importeStr'] += "+"+str(float(factura.subTotal)-float(factura.descuento))
+                self.diccionarioPorRFCs[factura.EmisorRFC]['trasladoIVAStr'] += "+"+str(factura.traslados['IVA']['importe'])
                 print("sumale " + str(factura.subTotal) )
             else:
                 self.diccionarioPorRFCs[factura.EmisorRFC] = {'subTotal': float(factura.subTotal),
                                                               'descuento': float(factura.descuento),
                                                               'trasladoIVA': float(factura.traslados['IVA']['importe']),
                                                               'importe': float(factura.subTotal)-float(factura.descuento),
-                                                              'total': float(factura.total)
+                                                              'total': float(factura.total),
+                                                              'importeStr': "="+str(float(factura.subTotal)-float(factura.descuento)),
+                                                              'trasladoIVAStr': "="+str(factura.traslados['IVA']['importe']),
+                                                              'nombre': factura.EmisorNombre
                                                             }
                 print("crealo con " + str(factura.subTotal))
 

@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'mainwindowV2.ui',
 # licensing of 'mainwindowV2.ui' applies.
 #
-# Created: Sat Jan 23 13:19:21 2021
+# Created: Sat Jan 23 18:15:54 2021
 #      by: pyside2-uic  running on PySide2 5.13.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -86,7 +86,7 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(QtWidgets.QApplication.translate("MainWindow", "Huiini 1.0", None, -1))
+        MainWindow.setWindowTitle(QtWidgets.QApplication.translate("MainWindow", "Huiini 1.4", None, -1))
         self.carpetaChooser.setText(QtWidgets.QApplication.translate("MainWindow", "Selecciona Carpeta", None, -1))
         self.impresora.setText(QtWidgets.QApplication.translate("MainWindow", "Selecciona Impresora", None, -1))
         self.imprimir.setText(QtWidgets.QApplication.translate("MainWindow", "Imprimir", None, -1))

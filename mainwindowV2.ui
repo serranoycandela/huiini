@@ -14,7 +14,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Huiini 1.0</string>
+   <string>Huiini 1.4</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="QPushButton" name="carpetaChooser">
